@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -81,6 +82,9 @@ const generateColor = (regionId) => {
 };
 
 function Map({ mapData }) {
+
+  const navigate = useNavigate();
+
   const [selectedRegion, setSelectedRegion] = useState(null);
   const [droughtData, setDroughtData] = useState(null);
   const [regionColors, setRegionColors] = useState({});
@@ -164,6 +168,9 @@ function Map({ mapData }) {
         path.onclick = async (event) => {
           event.preventDefault();
           
+          console.log("Clicked region ID:", regionId);
+          navigate(`/region/${regionId}`);
+
           const clickedRegionId = event.target.getAttribute("data-map-region-id");
           setSelectedRegion(clickedRegionId);
   

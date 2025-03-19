@@ -1,9 +1,11 @@
-import React, {useState} from "react";
+import React, { useState } from "react";
 import { Box } from "@mui/material";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import "./App.css";
 import TopBar from "./components/TopBar";
 import SideBar from "./components/SideBar";
 import Map from "./components/Map";
+import RegionDetail from "./components/RegionDetail";
 import mapApi from "./api/mapApi";
 
 function App() {
@@ -17,15 +19,28 @@ function App() {
   };
 
   return (
-    <Box display="flex" flexDirection="column" height="100vh">
-      <TopBar />
-      <Box display="flex" flexGrow={1}>
-        <SideBar onFetchData={handleFetchMapData} />
-        <Box flexGrow={1}>
-          <Map mapData={mapData} />
-        </Box>
-      </Box>
-    </Box>
+    <Router>
+      <Routes>
+        {/* 主页：显示地图 */}
+        <Route
+          path="/"
+          element={
+            <Box display="flex" flexDirection="column" height="100vh">
+              <TopBar />
+              <Box display="flex" flexGrow={1}>
+                <SideBar onFetchData={handleFetchMapData} />
+                <Box flexGrow={1}>
+                  <Map mapData={mapData} />
+                </Box>
+              </Box>
+            </Box>
+          }
+        />
+
+        {/* 详情页：当点击区域后跳转到 "/region/:id" */}
+        <Route path="/region/:regionId" element={<RegionDetail />} />
+      </Routes>
+    </Router>
   );
 }
 
