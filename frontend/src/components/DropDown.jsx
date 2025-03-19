@@ -38,7 +38,7 @@ const dropDownContent = {
   ]
 };
 
-const DropDown = ({ label, icon }) => {
+const DropDown = ({ label, icon, onSelectionChange }) => {
   const [open, setOpen] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState({});
   const [selectedDropdown, setSelectedDropdown] = useState("5 years");
@@ -48,7 +48,14 @@ const DropDown = ({ label, icon }) => {
   };
 
   const handleCheckboxChange = (option) => {
-    setSelectedOptions((prev) => ({ ...prev, [option]: !prev[option] }));
+    const newSelectedOptions = { ...selectedOptions, [option]: !selectedOptions[option] };
+    setSelectedOptions(newSelectedOptions);
+    onSelectionChange(label, newSelectedOptions); // notify the change to parent component
+  };
+
+  const handleDropdownChange = (event) => {
+    setSelectedDropdown(event.target.value);
+    onSelectionChange(label, event.target.value); // notify the change to parent component
   };
 
   return (
@@ -83,7 +90,7 @@ const DropDown = ({ label, icon }) => {
                 <ListItem key={index}>
                   <Select
                     value={selectedDropdown}
-                    onChange={(e) => setSelectedDropdown(e.target.value)}
+                    onChange={handleDropdownChange}
                   >
                     {item.options.map((opt, idx) => (
                       <MenuItem key={idx} value={opt}>

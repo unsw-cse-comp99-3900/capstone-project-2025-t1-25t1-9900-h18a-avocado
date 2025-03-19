@@ -1,10 +1,12 @@
-import React from "react";
+import React, {useState} from "react";
 import {
   Drawer,
   List,
   ListItem,
   ListItemIcon,
   ListItemText,
+  Button,
+  Box,
 } from "@mui/material";
 import SettingsInputSvideoIcon from "@mui/icons-material/SettingsInputSvideo";
 import ListIcon from "@mui/icons-material/List";
@@ -23,7 +25,18 @@ const menuItems = [
   { text: "Scenario", icon: <LayersIcon />, dropdown: true },
 ];
 
-function SideBar() {
+function SideBar({ onFetchData }) {
+  const [selectedFilters, setSelectedFilters] = useState({});
+
+  const handleSelectionChange = (category, options) => {
+    setSelectedFilters((prev) => ({ ...prev, [category]: options }));
+  };
+
+  const handleSubmit = () => {
+    console.log("Submitting filters:", selectedFilters);
+    onFetchData(selectedFilters); // transer to App.jsx
+  };
+
   return (
     <Drawer
       variant="permanent"
@@ -36,7 +49,7 @@ function SideBar() {
       <List>
         {menuItems.map(({ text, icon, dropdown }) =>
           dropdown ? (
-            <DropDown key={text} label={text} icon={icon} />
+            <DropDown key={text} label={text} icon={icon} onSelectionChange={handleSelectionChange} />
           ) : (
             <ListItem button key={text}>
               <ListItemIcon>{icon}</ListItemIcon>
@@ -45,6 +58,12 @@ function SideBar() {
           )
         )}
       </List>
+
+      <Box sx={{ p: 2, display: "flex", justifyContent: "center" }}>
+        <Button variant="contained" color="primary" onClick={handleSubmit}>
+          Submit Filters
+        </Button>
+      </Box>
     </Drawer>
   );
 }
