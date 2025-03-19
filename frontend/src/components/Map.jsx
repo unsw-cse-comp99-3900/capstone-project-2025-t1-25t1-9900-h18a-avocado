@@ -86,17 +86,13 @@ function Map() {
 
     setDroughtData(null);
 
-    const requestData = {
-      time: new Date().toISOString().split("T")[0],
-      latitude: -27.5, 
-      longitude: 133.0,
-    };
+    console.log("Sending Request Data:", regionId);
 
     try {
-      const response = await fetch("http://app1.naoffer.com/climate/api/spi", {
+      const response = await fetch("http://localhost:9901/region-table", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestData),
+        body: JSON.stringify({region_id: regionId}),
       });
 
       const data = await response.json();

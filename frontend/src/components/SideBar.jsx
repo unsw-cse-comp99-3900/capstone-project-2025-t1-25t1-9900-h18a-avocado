@@ -27,9 +27,13 @@ const menuItems = [
 
 function SideBar({ onFetchData }) {
   const [selectedFilters, setSelectedFilters] = useState({});
+  const [selectedSource, setSelectedSource] = useState("");
 
-  const handleSelectionChange = (category, options) => {
-    setSelectedFilters((prev) => ({ ...prev, [category]: options }));
+  const handleSelectionChange = (category, value) => {
+    setSelectedFilters((prev) => ({ ...prev, [category]: value }));
+    if (category === "Source") {
+      setSelectedSource(value);
+    }
   };
 
   const handleSubmit = () => {
@@ -49,7 +53,7 @@ function SideBar({ onFetchData }) {
       <List>
         {menuItems.map(({ text, icon, dropdown }) =>
           dropdown ? (
-            <DropDown key={text} label={text} icon={icon} onSelectionChange={handleSelectionChange} />
+            <DropDown key={text} label={text} icon={icon} onSelectionChange={handleSelectionChange} selectedSource={selectedSource} />
           ) : (
             <ListItem button key={text}>
               <ListItemIcon>{icon}</ListItemIcon>

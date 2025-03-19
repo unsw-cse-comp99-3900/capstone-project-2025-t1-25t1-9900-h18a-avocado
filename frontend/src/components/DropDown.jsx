@@ -1,11 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   ListItem,
   ListItemIcon,
   ListItemText,
   Collapse,
-  Checkbox,
-  FormControlLabel,
   List,
   MenuItem,
   Select
@@ -13,50 +11,52 @@ import {
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 
-// Define the dropdown content for different menus
+// Define dropdown options
 const dropDownContent = {
-  "Definition": [
-    { label: "Change in Number", type: "checkbox" },
-    { label: "Change in Length", type: "checkbox" }
-  ],
-  "Drought Index": [
-    { label: "SPI", type: "checkbox" },
-    { label: "SPEI", type: "checkbox" }, 
-    { label: "PDSI", type: "checkbox" }
-  ],
-  "Time Frames": [
-    { label: "Baseline", type: "input" },
-    { label: "Length", type: "dropdown", options: ["5 years", "10 years", "20 years", "Other"] }
-  ],
-  "Source": [
-    { label: "CMIP5", type: "checkbox" },
-    { label: "CMIP6", type: "checkbox" }
-  ],
-  "Scenario": [
-    { label: "RCP4.5", type: "checkbox" },
-    { label: "RCP8.5", type: "checkbox" }
-  ]
+  "Definition": {
+    options: ["", "Change in Number", "Change in Length"]
+  },
+  "Drought Index": {
+    options: ["", "SPI", "SPEI", "PDSI"]
+  },
+  "Time Frames": {
+    options: ["", "2020-2059", "2040-2079", "2060-2099"]
+  },
+  "Source": {
+    options: ["", "CMIP5", "CMIP6"]
+  }
 };
 
-const DropDown = ({ label, icon, onSelectionChange }) => {
+const getScenarioOptions = (selectedSource) => {
+  if (selectedSource === "CMIP6") {
+    return ["", "SSP1-2.6", "SSP3-7.0"];
+  }
+  return ["", "RCP4.5", "RCP8.5"];
+};
+
+const DropDown = ({ label, icon, onSelectionChange, selectedSource }) => {
   const [open, setOpen] = useState(false);
-  const [selectedOptions, setSelectedOptions] = useState({});
-  const [selectedDropdown, setSelectedDropdown] = useState("5 years");
+  const [selectedValue, setSelectedValue] = useState("");
+
+  useEffect(() => {
+    if (label === "Scenario") {
+      setSelectedValue("");
+    }
+  }, [selectedSource]);
 
   const handleToggle = () => {
     setOpen(!open);
   };
 
-  const handleCheckboxChange = (option) => {
-    const newSelectedOptions = { ...selectedOptions, [option]: !selectedOptions[option] };
-    setSelectedOptions(newSelectedOptions);
-    onSelectionChange(label, newSelectedOptions); // notify the change to parent component
+  const handleDropdownChange = (event) => {
+    setSelectedValue(event.target.value);
+    onSelectionChange(label, event.target.value);
   };
 
-  const handleDropdownChange = (event) => {
-    setSelectedDropdown(event.target.value);
-    onSelectionChange(label, event.target.value); // notify the change to parent component
-  };
+  const options =
+    label === "Scenario"
+      ? getScenarioOptions(selectedSource)
+      : dropDownContent[label]?.options || [""];
 
   return (
     <>
@@ -67,42 +67,18 @@ const DropDown = ({ label, icon, onSelectionChange }) => {
         {open ? <ExpandLess /> : <ExpandMore />}
       </ListItem>
 
-      {/*  Render the corresponding dropdown content */}
+      {/* Render dropdown menu */}
       <Collapse in={open} timeout="auto" unmountOnExit>
         <List component="div" disablePadding sx={{ pl: 4 }}>
-          {dropDownContent[label]?.map((item, index) => {
-            if (item.type === "checkbox") {
-              return (
-                <ListItem key={index}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={selectedOptions[item.label] || false}
-                        onChange={() => handleCheckboxChange(item.label)}
-                      />
-                    }
-                    label={item.label}
-                  />
-                </ListItem>
-              );
-            } else if (item.type === "dropdown") {
-              return (
-                <ListItem key={index}>
-                  <Select
-                    value={selectedDropdown}
-                    onChange={handleDropdownChange}
-                  >
-                    {item.options.map((opt, idx) => (
-                      <MenuItem key={idx} value={opt}>
-                        {opt}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </ListItem>
-              );
-            }
-            return null;
-          })}
+          <ListItem>
+            <Select value={selectedValue} onChange={handleDropdownChange} fullWidth>
+              {options.map((option, index) => (
+                <MenuItem key={index} value={option}>
+                  {option}
+                </MenuItem>
+              ))}
+            </Select>
+          </ListItem>
         </List>
       </Collapse>
     </>

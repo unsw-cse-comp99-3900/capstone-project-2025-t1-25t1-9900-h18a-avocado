@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://your-backend-url/api";
+const API_BASE_URL = "http://locolhost:9900";
 
 /**
  * send GET request
@@ -21,7 +21,7 @@ const getRequest = async (endpoint) => {
  * @returns {Promise<object>} return drought details data for the region
  */
 export const fetchDroughtData = async (regionId) => {
-  return await getRequest(`drought-data/region/${regionId}`);
+  return await getRequest(`region-table${regionId}`);
 };
 
 export default {
