@@ -93,10 +93,11 @@ function Map() {
     };
 
     try {
-      const response = await fetch("http://app1.naoffer.com/climate/api/spi", {
+      const response = await fetch("http://localhost:9901/region-table", {
         method: "POST",
+        mode: "cors",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestData),
+        body: JSON.stringify({ region_id: regionId }),
       });
 
       const data = await response.json();
