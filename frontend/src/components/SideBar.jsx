@@ -17,7 +17,7 @@ import {
 import SettingsInputSvideoIcon from "@mui/icons-material/SettingsInputSvideo";
 import ListIcon from "@mui/icons-material/List";
 import UpdateIcon from "@mui/icons-material/Update";
-import VisibilityIcon from "@mui/icons-material/Visibility";
+// import VisibilityIcon from "@mui/icons-material/Visibility";
 import SourceIcon from "@mui/icons-material/Source";
 import LayersIcon from "@mui/icons-material/Layers";
 import InfoIcon from "@mui/icons-material/Info";
@@ -27,7 +27,7 @@ const menuItems = [
   { text: "Definition", icon: <SettingsInputSvideoIcon />, dropdown: true },
   { text: "Drought Index", icon: <ListIcon />, dropdown: true },
   { text: "Time Frames", icon: <UpdateIcon />, dropdown: true },
-  { text: "Change", icon: <VisibilityIcon />, dropdown: false },
+  // { text: "Change", icon: <VisibilityIcon />, dropdown: false },
   { text: "Source", icon: <SourceIcon />, dropdown: true },
   { text: "Scenario", icon: <LayersIcon />, dropdown: true },
 ];
