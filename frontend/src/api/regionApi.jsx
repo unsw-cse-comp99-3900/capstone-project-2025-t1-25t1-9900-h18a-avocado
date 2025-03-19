@@ -1,13 +1,19 @@
-const API_BASE_URL = "http://locolhost:9900";
+const API_BASE_URL = "http://localhost:9901";
 
 /**
- * send GET request
+ * send POST request
  * @param {string} endpoint API path
+ * @param {object} payload request data
  * @returns {Promise<object>} return JSON data
  */
-const getRequest = async (endpoint) => {
+const postRequest = async (endpoint, payload) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/${endpoint}`);
+    const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
     return await response.json();
   } catch (error) {
     console.error("API request error:", error);
@@ -16,14 +22,18 @@ const getRequest = async (endpoint) => {
 };
 
 /**
- * gain detailed data for a region
+ * gain drought data of a region
  * @param {string} regionId region ID
- * @returns {Promise<object>} return drought details data for the region
+ * @returns {Promise<object>} return drought data of the region
  */
 export const fetchDroughtData = async (regionId) => {
-  return await getRequest(`region-table${regionId}`);
+  const requestData = {
+    region_id: regionId
+  };
+
+  return await postRequest("region-table", requestData);
 };
 
 export default {
-  fetchDroughtData
+  fetchDroughtData,
 };

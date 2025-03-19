@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import regionApi from "../api/regionApi";
 
 const svgContent = `
 <path data-map-region-id="1" class="no-zindex-fix" d="M220.71 74.59C215.34 78.95 206.52 80.75 199.8 82.92C191.26 86.68 185.36 93.46 183.04 102.08C182.92 102.51 182.74 102.84 182.33 102.98C175.11 105.06 168.88 115.19 165.18 122.13C163 126.9 163 130.18 163.67 134.43C163.67 135.82 164.76 137.74 164.05 139.23C154.49 153.59 139.01 132.73 115.13 156.49C109.12 157.83 102.16 156.06 95.44 156.09C89.07 155.74 82.67 155.56 76.67 156.21C64.59 157.53 54.09 162.23 48.63 175.73C48.41 176.36 47.88 176.85 47.28 177.16C30.27 185.87 26.29 190.64 19.2 204.33C13.69 213.11 12.39 217.38 14.04 228.89C9.1 244.62 -3.99 263.95 1.21 281.19C4.24 290.7 12.53 298.49 14.2 308.42C15.01 319.63 11.75 332.06 19.32 341.52C25.69 354.84 31.5 355.08 37.78 362.79C41.78 367.66 44.12 376.63 45.77 383.26C46.96 389.27 41.73 393.89 39.54 398.94C29.77 423.19 43.89 451.02 59.7 468.65C66.67 473.55 75.19 477.99 84.06 481.93C93.91 486.1 104.15 488.48 113.85 486.83C115.77 487.13 117.3 488.92 119.28 488.92C130.46 488.47 141.91 486.83 151.51 480.96C159.97 476.72 164.7 467.61 173.42 463.77C173.84 463.59 174.24 463.59 174.6 463.9C184.82 473.85 200.51 472.87 213.1 467.63C220.98 469.74 228.67 470.83 236.14 466.97C270.55 454.15 257.22 440.9 271.82 437.53C280.39 435.37 289.12 436.24 297.79 434.3C317.51 431.29 342.2 415.61 360.12 430.8C367.12 434.45 373.58 428.87 377.95 432.52C382.16 435.71 384.03 443.07 386.89 447.75C390.19 451.64 396.2 450.47 399.41 454.82C405.51 464.83 417.07 472.66 425.17 480.92C433.76 503.8 457.84 504.25 478.3 501.87C479.55 501.92 479.86 503.46 480.55 504.32C487.76 519.77 506.12 532.45 521.78 537.55C531.61 545.33 540.01 542.19 551.16 543.06C552.08 547.33 552.94 551.65 554.96 555.29C558.48 562.37 563.77 568.39 567.9 575.15C572.63 584.35 575.45 594.33 577.69 604.24C583.96 620.92 596.7 635.28 610.76 646.46C621.08 654.55 634.52 653.05 646.6 648.87C655.44 646.62 662.63 644.33 668.92 640.66C684.17 632.06 690.61 617.05 693.78 600.56C698.9 588.25 698.56 576.22 697.78 563.14C698.75 551.76 702.41 537.72 697.12 526.59C696.95 526.16 697.2 525.96 697.62 525.81C717.23 519.22 729.32 499.13 727.9 478.97C729.5 470.39 736.99 464.81 741.23 457.4C744.54 450.09 751.62 444.26 754.83 437.25C757.68 428.19 765.96 424.86 770.04 415.01C773.18 406.5 775.06 391.87 778.06 382.43C782.93 369.73 788.35 357.01 788.22 343.33C789.64 337.57 791.89 333.05 792.11 326.82C792.44 321.02 789.92 315.75 789.48 310.06C789.03 306.17 790.67 302.82 790.3 298.92C788.84 291.82 785.48 285.07 783.14 278.19C783.32 273.52 786.88 268.78 787.09 264.02C787.54 253.36 782.07 239.37 772.29 234.14C771.8 233.9 771.71 233.55 771.95 233.07C776.78 223 777.27 210.83 770.52 201.61C771.31 191.04 768.89 182.06 763.32 176.27C753.2 165.13 734.26 163.07 717.36 169.67C714.54 170.24 711.92 169.11 709.52 167.55C704.37 164.09 700.48 158.49 694.84 155.81C688.22 151.87 680.22 149.6 673.18 146.23C672.8 146.05 672.52 145.77 672.35 145.37C670.15 137 665.24 131.56 658.91 125.98C657.13 123.72 654.36 121.97 653.35 119.24C653.35 114.66 649.69 111.18 647.3 107.67C652.68 84.44 635.95 73.57 619.24 60.44C621.94 46.27 607.74 25.49 599.28 13.35C598.69 12.4 597.91 14.13 597.18 14.21C579.68 19.9 604.62 23.93 567.04 24.81C563.71 24.37 550.83 31.14 542.86 33.38C540.53 34.02 538.94 34.64 538.22 33.95C538.02 33.48 537.92 32.83 537.9 32.32C537.97 30.84 538.77 30.19 538.39 28.58C537.98 27.56 537.22 26.88 536.99 25.62C536.66 24.54 536.36 23.34 536.03 22.68C535.81 22.27 535.64 22.07 535.26 22.22C511.15 35.08 508.81 65.05 507.66 89.09C506.89 90.39 504.27 89.9 502.15 89.75C500.48 89.27 496.21 89.58 496.1 88.32C496.21 72.39 496.75 56.56 491.65 41.23C494.38 22.81 480.74 -1.22 459.7 1.02C451.49 0.490005 444.21 2.76 437.96 6.34C432.76 9.13 427.52 12.39 419.4 12.71C404.18 1.26 384.94 -3.85 366.79 3.37C353.59 3.96 335.17 0.310004 324.35 8.15C320.88 11.51 319.33 17.83 317.07 22.06C312.75 28.34 306 36.73 305.14 44.38C304.69 47.11 306.16 52.09 303.85 53.99C277.03 44.9 240.04 52.85 220.82 74.52L220.71 74.63V74.59Z" stroke="#485872" stroke-dasharray="3 4" fill="#1B3053" fill-opacity="0.1"/>
@@ -66,38 +67,60 @@ const svgContent = `
 
 `;
 
-const bounds = [
-  [-10, 110], // 西南角
-  [-45, 160], // 东北角
-];
 
+const bounds = [
+  [-6, 110], // 西南角
+  [-45, 150], // 东北角
+];
+const regionColors = {
+  1: "red",
+  2: "blue",
+};
 const generateColor = (regionId) => {
-  const hue = (regionId * 137.508) % 360;
-  return `hsl(${hue}, 70%, 50%)`;
+  return regionColors[regionId] || "gray"; // 如果没有预设的颜色，使用灰色
 };
 
-function Map() {
+function Map({ mapData }) {
   const [selectedRegion, setSelectedRegion] = useState(null);
   const [droughtData, setDroughtData] = useState(null);
+  const [regionColors, setRegionColors] = useState({});
+
+  useEffect(() => {
+    // 确保 mapData 是一个对象，并且包含 received_data 字段
+    if (mapData && Array.isArray(mapData.received_data)) {
+      const colors = {};
+      mapData.received_data.forEach((value, index) => {
+        const regionId = index + 1; // 假设 regionId 从 1 开始
+        if (value === 0) {
+          colors[regionId] = "gray"; // 不变
+        } else if (value === 1) {
+          colors[regionId] = "green"; // 增加
+        } else if (value === 2) {
+          colors[regionId] = "red"; // 减少
+        }
+      });
+      setRegionColors(colors);
+    } else {
+      console.error("Invalid mapData format:", mapData);
+    }
+  }, [mapData]);
 
   const fetchDroughtData = async (regionId) => {
-    if (!regionId) return;
+    if (!regionId || parseInt(regionId, 10) === 2) return; // 跳过 regionId=2
+  
     console.log(`Fetching drought index for region ${regionId}...`);
-
     setDroughtData(null);
-
-    console.log("Sending Request Data:", regionId);
-
+  
+    // const requestData = {
+    //   time: new Date().toISOString().split("T")[0],
+    //   latitude: -27.5,  // 这里可以根据 regionId 修改经纬度
+    //   longitude: 133.0,
+    // };
+    console.log("Sending regionId to API:", regionId);
     try {
-      const response = await fetch("http://localhost:9901/region-table", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({region_id: regionId}),
-      });
-
-      const data = await response.json();
+      const data = await regionApi.fetchDroughtData(regionId); // ✅ 直接调用 regionApi
       console.log("API Response:", data);
-
+  
       if (data.success) {
         setDroughtData(data);
       } else {
@@ -112,53 +135,78 @@ function Map() {
 
   const SVGOverlay = () => {
     const map = useMap();
-
+  
     useEffect(() => {
       if (!svgContent || !bounds || !map) return;
-
+  
       const svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       svgElement.setAttribute("xmlns", "http://www.w3.org/2000/svg");
       svgElement.setAttribute("viewBox", "0 0 793 653");
       svgElement.innerHTML = svgContent;
-
+  
       const svgOverlay = L.svgOverlay(svgElement, bounds, { interactive: true }).addTo(map);
-
+  
       svgElement.querySelectorAll("path").forEach((path) => {
         const regionId = path.getAttribute("data-map-region-id");
+  
+        // 确保 regionId 存在，并转换为数字
         if (!regionId) return;
-
-        const originalColor = generateColor(regionId);
-        path.style.fill = originalColor;
-        path.dataset.originalColor = originalColor; // 存储原始颜色
-
+        const regionNum = parseInt(regionId, 10);
+        
+        // 跳过 regionId = 2
+        if (regionNum === 2) return;
+  
+        const color = regionColors[regionId] || "gray";
+        path.style.fill = color;
+        path.dataset.originalColor = color;
+  
+        // 鼠标左键点击时，向后端请求数据
         path.onclick = async (event) => {
+          event.preventDefault();
+          
           const clickedRegionId = event.target.getAttribute("data-map-region-id");
           setSelectedRegion(clickedRegionId);
-          console.log("Clicked region ID:", clickedRegionId);
+  
+          console.log("Fetching data for region ID:", clickedRegionId);
+  
           await fetchDroughtData(clickedRegionId);
         };
-
+  
+        // 悬浮时变色
         path.onmouseover = (event) => {
-          event.target.style.fill = "yellow"; // 悬浮变色
+          event.target.style.fill = "yellow";
         };
-
+  
+        // 鼠标移出时恢复原始颜色
         path.onmouseout = (event) => {
-          event.target.style.fill = event.target.dataset.originalColor; // 恢复原始颜色
+          event.target.style.fill = event.target.dataset.originalColor;
         };
       });
-
+  
       return () => {
         if (svgOverlay) map.removeLayer(svgOverlay);
       };
-    }, [map]);
-
+    }, [map, regionColors]);
+  
     return null;
   };
 
   return (
     <div style={{ position: "relative" }}>
-      <MapContainer center={[-25.2744, 133.7751]} zoom={4} style={{ height: "100vh", flexGrow: 1 }}>
-        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+      <MapContainer
+        center={[-25.2744, 133.7751]}
+        zoom={5}
+        zoomControl={false} // ✅ 禁用缩放控件
+        dragging={false} // ✅ 禁用拖拽
+        scrollWheelZoom={false} // ✅ 禁用鼠标滚轮缩放
+        doubleClickZoom={false} // ✅ 禁用双击缩放
+        boxZoom={false} // ✅ 禁用框选缩放
+        keyboard={false} // ✅ 禁用键盘缩放
+        touchZoom={false} // ✅ 禁用触摸缩放
+        style={{ height: "100vh", width: "100%", backgroundColor: "lightblue" }} // ✅ 让地图铺满右侧
+      >
+        {/* 删除或注释掉 TileLayer */}
+        {/* <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" /> */}
         <SVGOverlay />
       </MapContainer>
 
