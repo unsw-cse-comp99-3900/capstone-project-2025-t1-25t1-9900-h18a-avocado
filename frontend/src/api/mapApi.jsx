@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://your-backend-url/api";
+const API_BASE_URL = "http://locolhost:9900";
 
 /**
  * send POST request
