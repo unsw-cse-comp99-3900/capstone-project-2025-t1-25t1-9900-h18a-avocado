@@ -17,13 +17,17 @@ ns = api.namespace("drought", description="Drought statistics operations")
 
 # 定义请求模型（请求体参数）
 drought_request_model = api.model("DroughtRequest", {
-    "table": fields.String(required=True, description="数据表名称，例如 'spi_cmip6_ssp126'"),
+    "index": fields.String(required=True, description="系数名称，例如 spi "),
+    "data_source": fields.String(required=True, description="数据源名称，例如 CMIP5"),
+    "scenario": fields.String(required=True, description="气候条件名称，例如 rcp45"),
     "start_year": fields.Integer(required=True, description="起始年份 (包含)"),
     "end_year": fields.Integer(required=True, description="结束年份 (包含)"),
     "region_id": fields.Integer(required=True, description="指定的区域 ID"),
     "threshold": fields.Float(required=False, default=-1.0, description="SPI 阈值（默认 -1.0）")
 })
-
+scenario_model = api.model("ScenarioRequest", {
+    "scenario": fields.String(required=True, description="气候条件名称，例如 rcp45")
+})
 # 创建 DroughtDatabase 对象并加载 CSV 数据（注意：首次运行会导入数据）
 db_loader = DroughtDatabase()
 db_loader.load_csv_files()
@@ -34,12 +38,14 @@ class DroughtMonthCount(Resource):
     @ns.expect(drought_request_model)
     def post(self):
         data = request.get_json()
-        table_name = data.get("table")
+        index = data.get("index")
+        data_source = data.get("data_source")
+        scenario = data.get("scenario")
         start_year = data.get("start_year")
         end_year = data.get("end_year")
         region_id = data.get("region_id")
         threshold = data.get("threshold", -1.0)
-        count = db_loader.get_drought_month_count_for_region(table_name, start_year, end_year, region_id, threshold)
+        count = db_loader.get_drought_month_count_for_region(index, data_source, scenario, start_year, end_year, region_id, threshold)
         return {"success": True, "drought_month_count": count}
 
 @ns.route("/drought-months-details")
@@ -48,12 +54,14 @@ class DroughtMonthsDetails(Resource):
     @ns.expect(drought_request_model)
     def post(self):
         data = request.get_json()
-        table_name = data.get("table")
+        index = data.get("index")
+        scenario = data.get("scenario")
+        data_source = data.get("data_source")
         start_year = data.get("start_year")
         end_year = data.get("end_year")
         region_id = data.get("region_id")
         threshold = data.get("threshold", -1.0)
-        details = db_loader.get_drought_months_details_for_region(table_name, start_year, end_year, region_id, threshold)
+        details = db_loader.get_drought_months_details_for_region(index, data_source, scenario, start_year, end_year, region_id, threshold)
         details_formatted = [f"{y}-{m:02d}" for (y, m) in details]
         return {"success": True, "drought_months_details": details_formatted}
 
@@ -63,19 +71,24 @@ class DroughtEventCount(Resource):
     @ns.expect(drought_request_model)
     def post(self):
         data = request.get_json()
-        table_name = data.get("table")
+        index = data.get("index")
+        scenario = data.get("scenario")
+        data_source = data.get("data_source")
         start_year = data.get("start_year")
         end_year = data.get("end_year")
         region_id = data.get("region_id")
         threshold = data.get("threshold", -1.0)
-        events = db_loader.get_drought_events_for_region(table_name, start_year, end_year, region_id, threshold)
+        events = db_loader.get_drought_events_for_region(index, data_source, scenario, start_year, end_year, region_id, threshold)
         return {"success": True, "drought_events": events}
 
 @ns.route("/regions")
 class Regions(Resource):
     @ns.doc("get_regions", description="返回所有数据表中不同的区域信息（region_id 和 region_name）")
-    def get(self):
-        regions_list = db_loader.get_regions_for_model()
+    @ns.expect(scenario_model)
+    def post(self):
+        data = request.get_json()
+        scenario = data.get("scenario")
+        regions_list = db_loader.get_regions_for_model(scenario)
         return {"success": True, "regions": regions_list}
 
 if __name__ == "__main__":
