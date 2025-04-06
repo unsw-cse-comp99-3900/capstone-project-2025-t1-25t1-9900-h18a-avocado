@@ -46,10 +46,9 @@ function SideBar({ onFetchData }) {
   };
 
   const handleSubmit = () => {
-    console.log("Submitting filters:", selectedFilters);
     onFetchData(selectedFilters);
   };
-
+  
   const handleOpenDialog = (content) => {
     setDialogContent(content);
     setOpenDialog(true);
@@ -94,6 +93,17 @@ function SideBar({ onFetchData }) {
             )
           )}
         </List>
+
+        <Box sx={{ p: 2 }}>
+          <Typography variant="subtitle2">Threshold</Typography>
+          <input
+            type="number"
+            step="0.1"
+            placeholder="-1"
+            style={{ width: "100%", padding: "4px" }}
+            onChange={(e) => handleSelectionChange("Threshold", e.target.value)}
+          />
+        </Box>
 
         <Box sx={{ p: 2, display: "flex", justifyContent: "center" }}>
           <Button variant="contained" color="primary" onClick={handleSubmit}>

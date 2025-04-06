@@ -6,22 +6,22 @@ import TopBar from "./components/TopBar";
 import SideBar from "./components/SideBar";
 import Map from "./components/Map";
 import RegionDetail from "./components/RegionDetail";
-import mapApi from "./api/mapApi";
+import { calculateRegionDiffs } from "./api/dataProcess";
 
 function App() {
   const [mapData, setMapData] = useState(null);
-
   const handleFetchMapData = async (filters) => {
-    console.log("Fetching map data with filters:", filters);
-    const data = await mapApi.fetchMapData(filters);
-    console.log("Map data received:", data);
-    setMapData(data); // update map data
+    try {
+      const regionDiffs = await calculateRegionDiffs(filters);
+      setMapData(regionDiffs);
+    } catch (error) {
+      console.error("Error fetching map data:", error);
+    }
   };
 
   return (
     <Router>
       <Routes>
-        {/* 主页：显示地图 */}
         <Route
           path="/"
           element={
@@ -36,8 +36,6 @@ function App() {
             </Box>
           }
         />
-
-        {/* 详情页：当点击区域后跳转到 "/region/:id" */}
         <Route path="/region/:regionId" element={<RegionDetail />} />
       </Routes>
     </Router>
