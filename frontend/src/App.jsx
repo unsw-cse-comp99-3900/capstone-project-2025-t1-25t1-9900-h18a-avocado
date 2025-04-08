@@ -13,7 +13,7 @@ function App() {
   const handleFetchMapData = async (filters) => {
     try {
       const regionDiffs = await calculateRegionDiffs(filters);
-      setMapData(regionDiffs);
+      setMapData({ received_data: regionDiffs });
     } catch (error) {
       console.error("Error fetching map data:", error);
     }

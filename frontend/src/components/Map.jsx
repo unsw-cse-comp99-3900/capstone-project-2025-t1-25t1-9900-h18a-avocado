@@ -34,9 +34,9 @@ function Map({ mapData }) {
         const regionId = index + 1; // 假设 regionId 从 1 开始
         if (value === 0) {
           colors[regionId] = "gray"; // 不变
-        } else if (value === 1) {
+        } else if (value > 0) {
           colors[regionId] = "green"; // 增加
-        } else if (value === 2) {
+        } else if (value < 0) {
           colors[regionId] = "red"; // 减少
         }
       });
