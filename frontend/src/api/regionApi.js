@@ -1,11 +1,5 @@
-const API_BASE_URL = "http://localhost:9901";
+const API_BASE_URL = "http://127.0.0.1:9901/drought";
 
-/**
- * send POST request
- * @param {string} endpoint API path
- * @param {object} payload request data
- * @returns {Promise<object>} return JSON data
- */
 const postRequest = async (endpoint, payload) => {
   try {
     const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
@@ -13,7 +7,6 @@ const postRequest = async (endpoint, payload) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-
     return await response.json();
   } catch (error) {
     console.error("API request error:", error);
@@ -21,19 +14,15 @@ const postRequest = async (endpoint, payload) => {
   }
 };
 
-/**
- * gain drought data of a region
- * @param {string} regionId region ID
- * @returns {Promise<object>} return drought data of the region
- */
-export const fetchDroughtData = async (regionId) => {
-  const requestData = {
-    region_id: regionId
-  };
+export const fetchDroughtEvents = async (payload) => {
+  return await postRequest("drought-event-count", payload);
+};
 
-  return await postRequest("region-table", requestData);
+export const fetchDroughtMonths = async (payload) => {
+  return await postRequest("drought-months-details", payload);
 };
 
 export default {
-  fetchDroughtData,
+  fetchDroughtEvents,
+  fetchDroughtMonths,
 };

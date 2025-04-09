@@ -11,7 +11,7 @@ export const calculateRegionDiffs = async (filters) => {
   const baseParams = {
     index: filters["Drought Index"]?.toLowerCase(),
     data_source: filters["Source"]?.toLowerCase(),
-    scenario: filters["Scenario"]?.toLowerCase().replace(/\./g, ""),
+    scenario: filters["Scenario"]?.toLowerCase().replace(/[.\-]/g, ""),
   threshold: parseFloat(filters["Threshold"]) || -1,
   };
   console.log("baseParams:", baseParams);
@@ -27,8 +27,8 @@ export const calculateRegionDiffs = async (filters) => {
       const baselinePayload = {
         ...baseParams,
         region_id,
-        start_year: 1980,
-        end_year: 2019,
+        start_year: 1976,
+        end_year: 2005,
       };
 
       const futurePayload = {
