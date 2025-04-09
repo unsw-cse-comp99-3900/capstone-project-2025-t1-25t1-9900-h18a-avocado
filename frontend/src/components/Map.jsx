@@ -141,7 +141,7 @@ function Map({ mapData, filters }) {
           console.log("stats:", stats);
         
           // 传递修改后的结构
-          const { Definition, Scenario, ...filteredFilters } = filters; // 移除不需要的字段
+          const { Scenario, ...filteredFilters } = filters; // 移除不需要的字段
 
           navigate(`/region/${regionId}`, {
             state: {
@@ -152,7 +152,7 @@ function Map({ mapData, filters }) {
             },
           });
 
-          console.log("state:", { state: { filteredFilters, ...stats } });
+          console.log("state:", { state: { filters, ...stats } });
         };
         
 
