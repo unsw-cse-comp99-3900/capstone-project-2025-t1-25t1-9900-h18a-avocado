@@ -49,40 +49,65 @@ function Map({ mapData, filters }) {
       region_id: 1030,
       index: filters["Drought Index"]?.toLowerCase(),
       data_source: filters["Source"]?.toLowerCase(),
-      scenario: filters["Scenario"]?.toLowerCase().replace(/[.\-]/g, ""),
       threshold: parseFloat(filters["Threshold"]) || -1,
     };
-
+  
     const [futureStart, futureEnd] = filters["Time Frames"]
       ? filters["Time Frames"].split("-").map((v) => parseInt(v.trim()))
       : [2020, 2059];
-    console.log("futureStart:", futureStart, "futureEnd:", futureEnd);
-
-    const futurePayload = { ...base, start_year: futureStart, end_year: futureEnd };
-    const baselinePayload = { ...base, start_year: 1980, end_year: 2019 };
-    console.log("futurePayload:", futurePayload);
+  
+    // 未来数据请求：根据 Source 请求不同的 scenario 数据
+    const scenarios = filters["Source"] === "CMIP5" 
+      ? ["rcp45", "rcp85"] 
+      : ["ssp126", "ssp370"];
+  
+    const futurePayloads = scenarios.map((scenario) => ({
+      ...base,
+      start_year: futureStart,
+      end_year: futureEnd,
+      scenario: scenario,
+    }));
+  
+    const baselineScenario = filters["Source"] === "CMIP5" ? "rcp45" : "ssp126"; // Default to first scenario
+    const baselinePayload = { 
+      ...base,
+      start_year: 1976,
+      end_year: 2005,
+      scenario: baselineScenario, // Adding scenario to baseline request
+    };
+  
     console.log("baselinePayload:", baselinePayload);
-
-
-    const [futureEvents, futureMonths, baselineEvents, baselineMonths] = await Promise.all([
-      regionApi.fetchDroughtEvents(futurePayload),
-      regionApi.fetchDroughtMonths(futurePayload),
+    console.log("futurePayloads:", futurePayloads);
+  
+    const [futureData1, futureData2, baselineData] = await Promise.all([
+      regionApi.fetchDroughtEvents(futurePayloads[0]),
+      regionApi.fetchDroughtEvents(futurePayloads[1]),
       regionApi.fetchDroughtEvents(baselinePayload),
+    ]);
+  
+    const [futureMonths1, futureMonths2, baselineMonths] = await Promise.all([
+      regionApi.fetchDroughtMonths(futurePayloads[0]),
+      regionApi.fetchDroughtMonths(futurePayloads[1]),
       regionApi.fetchDroughtMonths(baselinePayload),
     ]);
-    console.log("futureEvents:", futureEvents);
-    console.log("baselineEvents:", baselineEvents);
-
-
+  
+    // 返回修改后的数据结构
     return {
-      futureFreq: getEventFreqByDecade(futureEvents.drought_events, futureStart, futureEnd),
-      futureLen: getMonthCountByDecade(futureMonths.drought_months_details, futureStart, futureEnd),
-      baselineFreq: getEventFreqByDecade(baselineEvents.drought_events, 1980, 2019),
-      baselineLen: getMonthCountByDecade(baselineMonths.drought_months_details, 1980, 2019),
+      futureData: {
+        [scenarios[0]]: {
+          freq: getEventFreqByDecade(futureData1.drought_events, futureStart, futureEnd),
+          len: getMonthCountByDecade(futureMonths1.drought_months_details, futureStart, futureEnd),
+        },
+        [scenarios[1]]: {
+          freq: getEventFreqByDecade(futureData2.drought_events, futureStart, futureEnd),
+          len: getMonthCountByDecade(futureMonths2.drought_months_details, futureStart, futureEnd),
+        },
+      },
+      baselineFreq: getEventFreqByDecade(baselineData.drought_events, 1976, 2005),
+      baselineLen: getMonthCountByDecade(baselineMonths.drought_months_details, 1976, 2005),
     };
-    
-    
   };
+  
 
   const SVGOverlay = () => {
     const map = useMap();
@@ -110,18 +135,26 @@ function Map({ mapData, filters }) {
         path.onclick = async (event) => {
           event.preventDefault();
           setSelectedRegion(regionId);
-          const stats = await fetchRegionStats(regionId);
+          const stats = await fetchRegionStats(regionId); // 获取未来和基准数据
+          
           console.log("filters:", filters);
           console.log("stats:", stats);
+        
+          // 传递修改后的结构
+          const { Definition, Scenario, ...filteredFilters } = filters; // 移除不需要的字段
 
           navigate(`/region/${regionId}`, {
             state: {
-              filters,
-              ...stats,
+              filters: filteredFilters, // 将去掉 Definition 和 Scenario 的 filters 传递给 state
+              futureData: stats.futureData, // 传递两个 scenario 的数据
+              baselineFreq: stats.baselineFreq,
+              baselineLen: stats.baselineLen,
             },
           });
-          console.log("state:", {state: { filters, ...stats }});
+
+          console.log("state:", { state: { filteredFilters, ...stats } });
         };
+        
 
         path.onmouseover = (event) => {
           event.target.style.fill = "yellow";
