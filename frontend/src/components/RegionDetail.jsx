@@ -1,130 +1,189 @@
-import React, { useEffect, useState } from "react";
-import { Line } from "react-chartjs-2";
-import { Chart, registerables } from "chart.js";
-import { useParams } from "react-router-dom";
-import { Box, Button, MenuItem, Select, Typography } from "@mui/material";
+import React from 'react';
+import { Bar } from 'react-chartjs-2';
+import { Chart, registerables } from 'chart.js';
+import { Box, Typography, Paper } from '@mui/material';
+import { useLocation } from 'react-router-dom';
 
 Chart.register(...registerables);
 
-const fetchData = () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        year: [1980, 1990, 2000, 2010],
-        drought_months: [12, 14, 16, 18],
-        drought_length: [8, 9, 10, 11],
-        drought_events: {
-          "1980-2019": 7,
-          "2020-2029": 3,
-          "2030-2039": 4,
-          "2040-2049": 5,
-          "2050-2059": 4,
-          "2060-2069": 3,
-          "2070-2079": 2,
-          "2080-2089": 3,
-          "2090-2099": 4
-        }
-      });
-    }, 1000);
-  });
+// 场景显示名称映射
+const SCENARIO_DISPLAY_NAMES = {
+  rcp45: 'RCP4.5',
+  rcp85: 'RCP8.5',
+  ssp126: 'SSP1-2.6',
+  ssp370: 'SSP3-7.0'
+};
+
+// 场景颜色配置
+const SCENARIO_COLORS = {
+  rcp45: 'rgba(75, 192, 192, 0.7)',
+  rcp85: 'rgba(255, 99, 132, 0.7)',
+  ssp126: 'rgba(54, 162, 235, 0.7)',
+  ssp370: 'rgba(255, 159, 64, 0.7)'
 };
 
 const RegionDetail = () => {
-  const { regionId } = useParams();
-  const [data, setData] = useState(null);
-  const [selectedPeriod, setSelectedPeriod] = useState("2020-2059");
-  const [selectedPeriod2, setSelectedPeriod2] = useState("2020-2059");
+  const { state } = useLocation();
+  const { 
+    filters, 
+    futureData, 
+    baselineFreq, 
+    baselineLen 
+  } = state || {};
 
-  useEffect(() => {
-    fetchData().then((response) => setData(response));
-  }, []);
+  // 计算基准期平均值
+  const calculateAverage = (arr) => (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(2);
+  const avgBaselineFreq = calculateAverage(baselineFreq);
+  const avgBaselineLen = calculateAverage(baselineLen);
 
-  if (!data) {
-    return <Typography variant="h4">Loading data...</Typography>;
+  // 生成时间标签
+  const generateBaselineLabels = () => ['1976-1985', '1986-1995', '1996-2005'];
+  const generateFutureLabels = () => {
+    const [startYear] = filters['Time Frames'].split('-').map(Number);
+    return [
+      `${startYear}-${startYear+9}`,
+      `${startYear+10}-${startYear+19}`,
+      `${startYear+20}-${startYear+29}`
+    ];
+  };
+
+  // 获取未来数据集
+  const getFutureDatasets = () => {
+    if (!futureData) return [];
+    const scenarios = Object.keys(futureData);
+    const isFrequency = filters.Definition === 'Change in Number';
+    
+    return scenarios.map(scenario => ({
+      label: SCENARIO_DISPLAY_NAMES[scenario] || scenario,
+      data: isFrequency ? futureData[scenario].freq : futureData[scenario].len,
+      backgroundColor: SCENARIO_COLORS[scenario] || 'rgba(153, 102, 255, 0.7)'
+    }));
+  };
+
+  // 图表配置
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'top' },
+      tooltip: { mode: 'index', intersect: false }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: filters.Definition.includes('Length') ? 'Days' : 'Count'
+        }
+      },
+      x: {
+        title: { display: true, text: 'Time Period' }
+      }
+    }
+  };
+
+  if (!state) {
+    return (
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography variant="h6">No region data available</Typography>
+      </Box>
+    );
   }
 
-  const avgDroughtMonths = (data.drought_months.reduce((a, b) => a + b, 0) / data.drought_months.length).toFixed(2);
-  const avgDroughtLength = (data.drought_length.reduce((a, b) => a + b, 0) / data.drought_length.length).toFixed(2);
-
   return (
-    <Box sx={{ maxWidth: "800px", margin: "auto", padding: "20px" }}>
-      <Typography variant="h3">Drought Analysis - Region {regionId}</Typography>
+    <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
+      <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
+        Drought Analysis - Region {state.regionId}
+      </Typography>
+      
+      <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
+        <Typography variant="h6">
+          <strong>Index:</strong> {filters['Drought Index']}
+        </Typography>
+        <Typography variant="h6">
+          <strong>Source:</strong> {filters.Source}
+        </Typography>
+        <Typography variant="h6">
+          <strong>Baseline Period:</strong> 1976-2005
+        </Typography>
+        <Typography variant="h6">
+          <strong>Projection Period:</strong> {filters['Time Frames']}
+        </Typography>
+      </Paper>
 
-      <Box sx={{ mt: 4 }}>
-        <Typography variant="h5">Average number of drought months in the baseline period: {avgDroughtMonths}</Typography>
-        <Line
-          data={{
-            labels: data.year.map((year) => `${year}-${year + 9}`),
-            datasets: [
-              {
-                label: "Drought Months",
-                data: data.drought_months,
-                borderColor: "rgba(75, 192, 192, 1)",
-                borderWidth: 2,
-                fill: false
-              }
-            ]
-          }}
-        />
-      </Box>
+      {filters.Definition === 'Change in Number' ? (
+        <>
+          <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
+            <Typography variant="h5" gutterBottom>
+              Average number of drought months in the baseline period: {avgBaselineFreq}
+            </Typography>
+            <Box sx={{ height: 400 }}>
+              <Bar
+                data={{
+                  labels: generateBaselineLabels(),
+                  datasets: [{
+                    label: 'Historical Frequency',
+                    data: baselineFreq,
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)'
+                  }]
+                }}
+                options={chartOptions}
+              />
+            </Box>
+          </Paper>
 
-      <Box sx={{ mt: 4 }}>
-        <Typography variant="h5">Average drought length in the baseline period: {avgDroughtLength}</Typography>
-        <Line
-          data={{
-            labels: data.year.map((year) => `${year}-${year + 9}`),
-            datasets: [
-              {
-                label: "Drought Length",
-                data: data.drought_length,
-                borderColor: "rgba(255, 99, 132, 1)",
-                borderWidth: 2,
-                fill: false
-              }
-            ]
-          }}
-        />
-      </Box>
+          <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
+            <Typography variant="h5" gutterBottom>
+              Projected change in drought events
+            </Typography>
+            <Box sx={{ height: 400 }}>
+              <Bar
+                data={{
+                  labels: generateFutureLabels(),
+                  datasets: getFutureDatasets()
+                }}
+                options={chartOptions}
+              />
+            </Box>
+          </Paper>
+        </>
+      ) : (
+        <>
+          <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
+            <Typography variant="h5" gutterBottom>
+              Average drought length in the baseline period: {avgBaselineLen}
+            </Typography>
+            <Box sx={{ height: 400 }}>
+              <Bar
+                data={{
+                  labels: generateBaselineLabels(),
+                  datasets: [{
+                    label: 'Historical Duration',
+                    data: baselineLen,
+                    backgroundColor: 'rgba(255, 159, 64, 0.7)'
+                  }]
+                }}
+                options={chartOptions}
+              />
+            </Box>
+          </Paper>
 
-      <Box sx={{ mt: 4 }}>
-        <Typography variant="h5">Projected change in the number of drought events</Typography>
-        <Line
-          data={{
-            labels: Object.keys(data.drought_events),
-            datasets: [
-              {
-                label: "Drought Events",
-                data: Object.values(data.drought_events),
-                borderColor: "rgba(54, 162, 235, 1)",
-                borderWidth: 2,
-                fill: false
-              }
-            ]
-          }}
-        />
-      </Box>
-
-      <Box sx={{ mt: 4 }}>
-        <Typography variant="h5">Projected change in drought length</Typography>
-        <Line
-          data={{
-            labels: Object.keys(data.drought_events),
-            datasets: [
-              {
-                label: "Drought Length Change",
-                data: Object.values(data.drought_events),
-                borderColor: "rgba(255, 159, 64, 1)",
-                borderWidth: 2,
-                fill: false
-              }
-            ]
-          }}
-        />
-      </Box>
-
-      <Button sx={{ mt: 4 }} variant="contained" onClick={() => window.location.reload()}>
-        Refresh Data
-      </Button>
+          <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
+            <Typography variant="h5" gutterBottom>
+              Projected change in drought length
+            </Typography>
+            <Box sx={{ height: 400 }}>
+              <Bar
+                data={{
+                  labels: generateFutureLabels(),
+                  datasets: getFutureDatasets()
+                }}
+                options={chartOptions}
+              />
+            </Box>
+          </Paper>
+        </>
+      )}
     </Box>
   );
 };
