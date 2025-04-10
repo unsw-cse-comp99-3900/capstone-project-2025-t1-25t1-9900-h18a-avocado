@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Bar } from 'react-chartjs-2';
 import { Chart, registerables } from 'chart.js';
-import { useParams } from 'react-router-dom';
-import { Box, Typography, CircularProgress, Alert, Paper } from '@mui/material';
-import regionApi from '../api/regionApi';
+import { Box, Typography, Paper } from '@mui/material';
+import { useLocation } from 'react-router-dom';
 
 Chart.register(...registerables);
 
+// 场景显示名称映射
 const SCENARIO_DISPLAY_NAMES = {
   rcp45: 'RCP4.5',
   rcp85: 'RCP8.5',
@@ -14,6 +14,7 @@ const SCENARIO_DISPLAY_NAMES = {
   ssp370: 'SSP3-7.0'
 };
 
+// 场景颜色配置
 const SCENARIO_COLORS = {
   rcp45: 'rgba(75, 192, 192, 0.7)',
   rcp85: 'rgba(255, 99, 132, 0.7)',
@@ -22,34 +23,23 @@ const SCENARIO_COLORS = {
 };
 
 const RegionDetail = () => {
-  const { regionId } = useParams();
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { state } = useLocation();
+  const { 
+    filters, 
+    futureData, 
+    baselineFreq, 
+    baselineLen 
+  } = state || {};
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await regionApi.fetchDroughtData(regionId);
-        if (!response?.state) throw new Error("Invalid data format");
-        setData(response.state);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
-  }, [regionId]);
-
+  // 计算基准期平均值
   const calculateAverage = (arr) => (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(2);
+  const avgBaselineFreq = calculateAverage(baselineFreq);
+  const avgBaselineLen = calculateAverage(baselineLen);
 
+  // 生成时间标签
   const generateBaselineLabels = () => ['1976-1985', '1986-1995', '1996-2005'];
-
-  const generateFutureLabels = (timeFrame) => {
-    const startYear = parseInt(timeFrame.substring(0, 4));
+  const generateFutureLabels = () => {
+    const [startYear] = filters['Time Frames'].split('-').map(Number);
     return [
       `${startYear}-${startYear+9}`,
       `${startYear+10}-${startYear+19}`,
@@ -57,16 +47,20 @@ const RegionDetail = () => {
     ];
   };
 
+  // 获取未来数据集
   const getFutureDatasets = () => {
-    if (!data?.futureData) return [];
-    const isFrequency = data.filteredFilters.Definition === 'Change in Number';
-    return Object.entries(data.futureData).map(([scenario, values]) => ({
+    if (!futureData) return [];
+    const scenarios = Object.keys(futureData);
+    const isFrequency = filters.Definition === 'Change in Number';
+    
+    return scenarios.map(scenario => ({
       label: SCENARIO_DISPLAY_NAMES[scenario] || scenario,
-      data: isFrequency ? values.freq : values.len,
+      data: isFrequency ? futureData[scenario].freq : futureData[scenario].len,
       backgroundColor: SCENARIO_COLORS[scenario] || 'rgba(153, 102, 255, 0.7)'
     }));
   };
 
+  // 图表配置
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -75,38 +69,49 @@ const RegionDetail = () => {
       tooltip: { mode: 'index', intersect: false }
     },
     scales: {
-      y: { 
+      y: {
         beginAtZero: true,
-        title: { display: true, text: data?.filteredFilters?.Definition?.includes('Length') ? 'Days' : 'Count' }
+        title: {
+          display: true,
+          text: filters.Definition.includes('Length') ? 'Days' : 'Count'
+        }
       },
-      x: { 
+      x: {
         title: { display: true, text: 'Time Period' }
       }
     }
   };
 
-  if (loading) return <CircularProgress sx={{ display: 'block', mx: 'auto', mt: 4 }} />;
-  if (error) return <Alert severity="error" sx={{ mt: 4 }}>Error: {error}</Alert>;
-  if (!data) return <Alert severity="warning" sx={{ mt: 4 }}>No data available</Alert>;
-
-  const { Definition } = data.filteredFilters;
-  const avgBaselineFreq = calculateAverage(data.baselineFreq);
-  const avgBaselineLen = calculateAverage(data.baselineLen);
+  if (!state) {
+    return (
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography variant="h6">No region data available</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
       <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
-        Drought Analysis - Region {regionId}
+        Drought Analysis - Region {state.regionId}
       </Typography>
       
       <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
-        <Typography variant="h6"><strong>Index:</strong> {data.filteredFilters['Drought Index']}</Typography>
-        <Typography variant="h6"><strong>Source:</strong> {data.filteredFilters.Source}</Typography>
-        <Typography variant="h6"><strong>Baseline Period:</strong> 1976-2005</Typography>
-        <Typography variant="h6"><strong>Projection Period:</strong> {data.filteredFilters['Time Frames']}</Typography>
+        <Typography variant="h6">
+          <strong>Index:</strong> {filters['Drought Index']}
+        </Typography>
+        <Typography variant="h6">
+          <strong>Source:</strong> {filters.Source}
+        </Typography>
+        <Typography variant="h6">
+          <strong>Baseline Period:</strong> 1976-2005
+        </Typography>
+        <Typography variant="h6">
+          <strong>Projection Period:</strong> {filters['Time Frames']}
+        </Typography>
       </Paper>
 
-      {Definition === 'Change in Number' && (
+      {filters.Definition === 'Change in Number' ? (
         <>
           <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
             <Typography variant="h5" gutterBottom>
@@ -118,7 +123,7 @@ const RegionDetail = () => {
                   labels: generateBaselineLabels(),
                   datasets: [{
                     label: 'Historical Frequency',
-                    data: data.baselineFreq,
+                    data: baselineFreq,
                     backgroundColor: 'rgba(54, 162, 235, 0.7)'
                   }]
                 }}
@@ -134,7 +139,7 @@ const RegionDetail = () => {
             <Box sx={{ height: 400 }}>
               <Bar
                 data={{
-                  labels: generateFutureLabels(data.filteredFilters['Time Frames']),
+                  labels: generateFutureLabels(),
                   datasets: getFutureDatasets()
                 }}
                 options={chartOptions}
@@ -142,9 +147,7 @@ const RegionDetail = () => {
             </Box>
           </Paper>
         </>
-      )}
-
-      {Definition === 'Change in Length' && (
+      ) : (
         <>
           <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
             <Typography variant="h5" gutterBottom>
@@ -156,7 +159,7 @@ const RegionDetail = () => {
                   labels: generateBaselineLabels(),
                   datasets: [{
                     label: 'Historical Duration',
-                    data: data.baselineLen,
+                    data: baselineLen,
                     backgroundColor: 'rgba(255, 159, 64, 0.7)'
                   }]
                 }}
@@ -172,7 +175,7 @@ const RegionDetail = () => {
             <Box sx={{ height: 400 }}>
               <Bar
                 data={{
-                  labels: generateFutureLabels(data.filteredFilters['Time Frames']),
+                  labels: generateFutureLabels(),
                   datasets: getFutureDatasets()
                 }}
                 options={chartOptions}
