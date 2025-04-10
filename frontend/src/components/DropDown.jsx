@@ -20,7 +20,7 @@ const dropDownContent = {
     options: ["", "SPI", "SPEI", "PDSI"]
   },
   "Time Frames": {
-    options: ["", "2020-2059", "2040-2079", "2060-2099"]
+    options: ["", "2006-2035", "2036-2065", "2066-2095"]
   },
   "Source": {
     options: ["", "CMIP5", "CMIP6"]

@@ -5,6 +5,10 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import regionApi from "../api/regionApi";
 import svgContent from "../data/svgMap";
+<<<<<<< HEAD
+=======
+import { getEventFreqByDecade, getMonthCountByDecade } from "../api/dataStats";
+>>>>>>> origin/frontend_boxiangxu
 
 const bounds = [
   [-6, 110], // 西南角
@@ -18,26 +22,23 @@ const generateColor = (regionId) => {
   return regionColors[regionId] || "gray"; // 如果没有预设的颜色，使用灰色
 };
 
-function Map({ mapData }) {
-
+function Map({ mapData, filters }) {
   const navigate = useNavigate();
-
   const [selectedRegion, setSelectedRegion] = useState(null);
   const [droughtData, setDroughtData] = useState(null);
   const [regionColors, setRegionColors] = useState({});
 
   useEffect(() => {
-    // 确保 mapData 是一个对象，并且包含 received_data 字段
     if (mapData && Array.isArray(mapData.received_data)) {
       const colors = {};
       mapData.received_data.forEach((value, index) => {
-        const regionId = index + 1; // 假设 regionId 从 1 开始
+        const regionId = index + 1;
         if (value === 0) {
-          colors[regionId] = "gray"; // 不变
-        } else if (value === 1) {
-          colors[regionId] = "green"; // 增加
-        } else if (value === 2) {
-          colors[regionId] = "red"; // 减少
+          colors[regionId] = "gray";
+        } else if (value > 0) {
+          colors[regionId] = "green";
+        } else if (value < 0) {
+          colors[regionId] = "red";
         }
       });
       setRegionColors(colors);
@@ -46,92 +47,131 @@ function Map({ mapData }) {
     }
   }, [mapData]);
 
-  const fetchDroughtData = async (regionId) => {
-    if (!regionId || parseInt(regionId, 10) === 2) return; // 跳过 regionId=2
+  const fetchRegionStats = async (regionId) => {
+    const base = {
+      region_id: 1030,
+      index: filters["Drought Index"]?.toLowerCase(),
+      data_source: filters["Source"]?.toLowerCase(),
+      threshold: parseFloat(filters["Threshold"]) || -1,
+    };
   
-    console.log(`Fetching drought index for region ${regionId}...`);
-    setDroughtData(null);
+    const [futureStart, futureEnd] = filters["Time Frames"]
+      ? filters["Time Frames"].split("-").map((v) => parseInt(v.trim()))
+      : [2020, 2059];
   
-    // const requestData = {
-    //   time: new Date().toISOString().split("T")[0],
-    //   latitude: -27.5,  // 这里可以根据 regionId 修改经纬度
-    //   longitude: 133.0,
-    // };
-    console.log("Sending regionId to API:", regionId);
-    try {
-      const data = await regionApi.fetchDroughtData(regionId); // ✅ 直接调用 regionApi
-      console.log("API Response:", data);
+    // 未来数据请求：根据 Source 请求不同的 scenario 数据
+    const scenarios = filters["Source"] === "CMIP5" 
+      ? ["rcp45", "rcp85"] 
+      : ["ssp126", "ssp370"];
   
-      if (data.success) {
-        setDroughtData(data);
-      } else {
-        console.error("Failed to fetch drought index:", data.msg);
-        setDroughtData(null);
-      }
-    } catch (error) {
-      console.error("Request error:", error);
-      setDroughtData(null);
-    }
+    const futurePayloads = scenarios.map((scenario) => ({
+      ...base,
+      start_year: futureStart,
+      end_year: futureEnd,
+      scenario: scenario,
+    }));
+  
+    const baselineScenario = filters["Source"] === "CMIP5" ? "rcp45" : "ssp126"; // Default to first scenario
+    const baselinePayload = { 
+      ...base,
+      start_year: 1976,
+      end_year: 2005,
+      scenario: baselineScenario, // Adding scenario to baseline request
+    };
+  
+    console.log("baselinePayload:", baselinePayload);
+    console.log("futurePayloads:", futurePayloads);
+  
+    const [futureData1, futureData2, baselineData] = await Promise.all([
+      regionApi.fetchDroughtEvents(futurePayloads[0]),
+      regionApi.fetchDroughtEvents(futurePayloads[1]),
+      regionApi.fetchDroughtEvents(baselinePayload),
+    ]);
+  
+    const [futureMonths1, futureMonths2, baselineMonths] = await Promise.all([
+      regionApi.fetchDroughtMonths(futurePayloads[0]),
+      regionApi.fetchDroughtMonths(futurePayloads[1]),
+      regionApi.fetchDroughtMonths(baselinePayload),
+    ]);
+  
+    // 返回修改后的数据结构
+    return {
+      futureData: {
+        [scenarios[0]]: {
+          freq: getEventFreqByDecade(futureData1.drought_events, futureStart, futureEnd),
+          len: getMonthCountByDecade(futureMonths1.drought_months_details, futureStart, futureEnd),
+        },
+        [scenarios[1]]: {
+          freq: getEventFreqByDecade(futureData2.drought_events, futureStart, futureEnd),
+          len: getMonthCountByDecade(futureMonths2.drought_months_details, futureStart, futureEnd),
+        },
+      },
+      baselineFreq: getEventFreqByDecade(baselineData.drought_events, 1976, 2005),
+      baselineLen: getMonthCountByDecade(baselineMonths.drought_months_details, 1976, 2005),
+    };
   };
+  
 
   const SVGOverlay = () => {
     const map = useMap();
-  
+
     useEffect(() => {
       if (!svgContent || !bounds || !map) return;
-  
+
       const svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       svgElement.setAttribute("xmlns", "http://www.w3.org/2000/svg");
       svgElement.setAttribute("viewBox", "0 0 793 653");
       svgElement.innerHTML = svgContent;
-  
+
       const svgOverlay = L.svgOverlay(svgElement, bounds, { interactive: true }).addTo(map);
-  
+
       svgElement.querySelectorAll("path").forEach((path) => {
         const regionId = path.getAttribute("data-map-region-id");
-  
-        // 确保 regionId 存在，并转换为数字
         if (!regionId) return;
         const regionNum = parseInt(regionId, 10);
-        
-        // 跳过 regionId = 2
         if (regionNum === 2) return;
-  
+
         const color = regionColors[regionId] || "gray";
         path.style.fill = color;
         path.dataset.originalColor = color;
-  
-        // 鼠标左键点击时，向后端请求数据
+
         path.onclick = async (event) => {
           event.preventDefault();
+          setSelectedRegion(regionId);
+          const stats = await fetchRegionStats(regionId); // 获取未来和基准数据
           
-          console.log("Clicked region ID:", regionId);
-          navigate(`/region/${regionId}`);
+          console.log("filters:", filters);
+          console.log("stats:", stats);
+        
+          // 传递修改后的结构
+          const { Scenario, ...filteredFilters } = filters; // 移除不需要的字段
 
-          const clickedRegionId = event.target.getAttribute("data-map-region-id");
-          setSelectedRegion(clickedRegionId);
-  
-          console.log("Fetching data for region ID:", clickedRegionId);
-  
-          await fetchDroughtData(clickedRegionId);
+          navigate(`/region/${regionId}`, {
+            state: {
+              filters: filteredFilters, // 将去掉 Definition 和 Scenario 的 filters 传递给 state
+              futureData: stats.futureData, // 传递两个 scenario 的数据
+              baselineFreq: stats.baselineFreq,
+              baselineLen: stats.baselineLen,
+            },
+          });
+
+          console.log("state:", { state: { filters, ...stats } });
         };
-  
-        // 悬浮时变色
+        
+
         path.onmouseover = (event) => {
           event.target.style.fill = "yellow";
         };
-  
-        // 鼠标移出时恢复原始颜色
         path.onmouseout = (event) => {
           event.target.style.fill = event.target.dataset.originalColor;
         };
       });
-  
+
       return () => {
         if (svgOverlay) map.removeLayer(svgOverlay);
       };
     }, [map, regionColors]);
-  
+
     return null;
   };
 
@@ -140,17 +180,15 @@ function Map({ mapData }) {
       <MapContainer
         center={[-25.2744, 133.7751]}
         zoom={5}
-        zoomControl={false} // ✅ 禁用缩放控件
-        dragging={false} // ✅ 禁用拖拽
-        scrollWheelZoom={false} // ✅ 禁用鼠标滚轮缩放
-        doubleClickZoom={false} // ✅ 禁用双击缩放
-        boxZoom={false} // ✅ 禁用框选缩放
-        keyboard={false} // ✅ 禁用键盘缩放
-        touchZoom={false} // ✅ 禁用触摸缩放
-        style={{ height: "100vh", width: "100%", backgroundColor: "lightblue" }} // ✅ 让地图铺满右侧
+        zoomControl={false}
+        dragging={false}
+        scrollWheelZoom={false}
+        doubleClickZoom={false}
+        boxZoom={false}
+        keyboard={false}
+        touchZoom={false}
+        style={{ height: "100vh", width: "100%", backgroundColor: "lightblue" }}
       >
-        {/* 删除或注释掉 TileLayer */}
-        {/* <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" /> */}
         <SVGOverlay />
       </MapContainer>
 

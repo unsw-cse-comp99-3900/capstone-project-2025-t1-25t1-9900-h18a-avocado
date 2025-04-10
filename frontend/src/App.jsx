@@ -10,10 +10,20 @@ import { calculateRegionDiffs } from "./api/dataProcess";
 
 function App() {
   const [mapData, setMapData] = useState(null);
+<<<<<<< HEAD
   const handleFetchMapData = async (filters) => {
     try {
       const regionDiffs = await calculateRegionDiffs(filters);
       setMapData(regionDiffs);
+=======
+  const [filters, setFilters] = useState(null); // ✅ 新增 state 用于存 filters
+
+  const handleFetchMapData = async (filters) => {
+    try {
+      setFilters(filters); // ✅ 保存 filters
+      const regionDiffs = await calculateRegionDiffs(filters);
+      setMapData({ received_data: regionDiffs });
+>>>>>>> origin/frontend_boxiangxu
     } catch (error) {
       console.error("Error fetching map data:", error);
     }
@@ -30,7 +40,7 @@ function App() {
               <Box display="flex" flexGrow={1}>
                 <SideBar onFetchData={handleFetchMapData} />
                 <Box flexGrow={1}>
-                  <Map mapData={mapData} />
+                  <Map mapData={mapData} filters={filters} /> {/* ✅ 传 filters */}
                 </Box>
               </Box>
             </Box>
@@ -41,5 +51,6 @@ function App() {
     </Router>
   );
 }
+
 
 export default App;
