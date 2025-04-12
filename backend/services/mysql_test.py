@@ -134,7 +134,8 @@ class DroughtDatabase:
         return [{"region_id": rid, "region_name": rname} for rid, rname in regions.items()]
 
     def get_drought_month_count_for_region(self, index, data_source, scenario, model_name, start_year, end_year, region_id, threshold=-1.0):
-        table_name = f"{index.lower()}_{data_source.lower()}_{scenario.lower()}_{model_name.lower()}"
+        table_name = f"{index.lower()}_{data_source.lower()}_{scenario.lower()}_pr_{model_name.lower()}"
+
         table = Table(table_name, self.metadata, autoload_with=self.engine)
         session = self.Session()
         stmt = select(func.count(func.distinct((table.c.year * 100) + table.c.month))).where(
@@ -147,7 +148,8 @@ class DroughtDatabase:
         return count if count is not None else 0
 
     def get_drought_events_for_region(self, index, data_source, scenario, model_name,start_year, end_year, region_id, threshold=-1.0):
-        table_name = f"{index.lower()}_{data_source.lower()}_{scenario.lower()}_{model_name.lower()}"
+
+        table_name = f"{index.lower()}_{data_source.lower()}_{scenario.lower()}_pr_{model_name.lower()}"
         table = Table(table_name, self.metadata, autoload_with=self.engine)
         session = self.Session()
         stmt = select(table.c.year, table.c.month).where(
@@ -194,7 +196,7 @@ class DroughtDatabase:
         return events
 
     def get_drought_months_details_for_region(self, index, data_source, scenario, model_name, start_year, end_year, region_id, threshold=-1.0):
-        table_name = f"{index.lower()}_{data_source.lower()}_{scenario.lower()}_{model_name.lower()}"
+        table_name = f"{index.lower()}_{data_source.lower()}_{scenario.lower()}_pr_{model_name.lower()}"
         table = Table(table_name, self.metadata, autoload_with=self.engine)
         session = self.Session()
         stmt = select(table.c.year, table.c.month).where(
