@@ -124,5 +124,5 @@ if __name__ == "__main__":
 
 
     for model_name in CMIP6_models:
-        compute_spi("CMIP6", "ssp126", model_name=model_name, variable="pr", cal_start="2015-01-01", cal_end="2099-12-31")
-        compute_spi("CMIP6", "ssp370", model_name=model_name, variable="pr", cal_start="2015-01-01", cal_end="2099-12-31")
+        compute_spi("CMIP6", "ssp370", model_name=model_name, variable="pr", cal_start="1976-01-01", cal_end="2005-12-31")
+
