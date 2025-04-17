@@ -90,21 +90,33 @@ function Map({ mapData, filters }) {
       regionApi.fetchDroughtMonths(futurePayloads[1]),
       regionApi.fetchDroughtMonths(baselinePayload),
     ]);
+
+    const futureFreq1 = getEventFreqByDecade(futureData1.drought_events, futureStart, futureEnd);
+    const futureFreq2 = getEventFreqByDecade(futureData2.drought_events, futureStart, futureEnd);
+    const futureLen1 = getMonthCountByDecade(futureMonths1.drought_months_details, futureStart, futureEnd);
+    const futureLen2 = getMonthCountByDecade(futureMonths2.drought_months_details, futureStart, futureEnd);
+    const baselineFreq = getEventFreqByDecade(baselineData.drought_events, 1976, 2005);
+    const baselineLen = getMonthCountByDecade(baselineMonths.drought_months_details, 1976, 2005);
+
+    const futureFreqPercentage1 = futureFreq1.map((freq, index) => (freq / baselineFreq[index]));
+    const futureFreqPercentage2 = futureFreq2.map((freq, index) => (freq / baselineFreq[index]));
+    const futureLenPercentage1 = futureLen1.map((len, index) => (len / baselineLen[index]));
+    const futureLenPercentage2 = futureLen2.map((len, index) => (len / baselineLen[index]));
   
     // 返回修改后的数据结构
     return {
       futureData: {
         [scenarios[0]]: {
-          freq: getEventFreqByDecade(futureData1.drought_events, futureStart, futureEnd),
-          len: getMonthCountByDecade(futureMonths1.drought_months_details, futureStart, futureEnd),
+          freq: futureFreqPercentage1,
+          len: futureLenPercentage1,
         },
         [scenarios[1]]: {
-          freq: getEventFreqByDecade(futureData2.drought_events, futureStart, futureEnd),
-          len: getMonthCountByDecade(futureMonths2.drought_months_details, futureStart, futureEnd),
+          freq: futureFreqPercentage2,
+          len: futureLenPercentage2,
         },
       },
-      baselineFreq: getEventFreqByDecade(baselineData.drought_events, 1976, 2005),
-      baselineLen: getMonthCountByDecade(baselineMonths.drought_months_details, 1976, 2005),
+      baselineFreq,
+      baselineLen,
     };
   };
   
