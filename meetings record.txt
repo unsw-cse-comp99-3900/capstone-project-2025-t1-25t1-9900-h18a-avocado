@@ -1,0 +1,43 @@
+Time: 3/3/2025 14:00–15:00
+Place: Microsoft Meeting
+Content: Division of front-end and back-end tasks for the web project: 4 members assigned to the front end, 2 to the back end. Task assignment for the proposal was also discussed.
+
+Time: 15/3/2025 20:00–21:00
+Place: Microsoft Meeting
+Content: Detailed division of front-end and back-end tasks.
+
+Front-end: Boxiang Xu is responsible for API development and UI design; Jiawei Ma and Yangyang Chen are responsible for the development and optimization of the map component; Hexiang Wang is responsible for data visualization.
+
+Back-end: Teng Zang is responsible for Flask development, database development, and SPI drought index calculation; Haoze Jin is responsible for the development of SPEI and PDSI drought indices.
+
+Time: 18/3/2025 20:00–22:00
+Place: Microsoft Meeting
+Content: Checked progress and reviewed implemented Sprint 1 user stories. Adjustments were made to the progress and code according to the project specifications. Determined the shapefile and data visualization format for the map in preparation for Demo A.
+
+Time: 19/3/2025 19:00–20:00
+Place: Face-to-face
+Content: Final revision and practice for Demo A presentation and slides.
+
+Time: 22/3/2025 15:00–17:00
+Place: Face-to-face
+Content: Summary of Demo A and Sprint 1. Identified strengths and weaknesses of Sprint 1. Determined "things to try" for Sprint 2 and completed Retro A.
+
+Time: 31/3/2025 15:00–17:00
+Place: Face-to-face
+Content: Checked progress and reviewed Sprint 2. Adjusted and optimized the drought index calculations.
+
+Time: 3/4/2025 20:30–21:30
+Place: Face-to-face
+Content: Checked progress, updated code, and optimized the existing structure and components according to project specifications and client feedback.
+
+Time: 9/4/2025 14:00–15:00
+Place: Microsoft Meeting
+Content: Checked progress and reviewed implemented Sprint 2 user stories. Updated the front-end API, added threshold functionality, further optimized map rendering, and made updates and optimizations to the Region Detail page. Modified the data request formats for both front-end and back-end. Built Swagger documentation to further separate the front and back ends, preparing for Demo B.
+
+Time: 10/4/2025 20:30–21:30
+Place: Face-to-face
+Content: Checked progress, updated code, and optimized the current structure and components based on client feedback.
+
+Time: 13/4/2025 10:00–11:30
+Place: Microsoft Meeting
+Content: Summary of Demo B and Sprint 2. Reviewed the “things to try” from Retro A, identified strengths and weaknesses of Sprint 2, determined “things to try” for Sprint 3, and completed Retro B.
