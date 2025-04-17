@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { Box } from "@mui/material";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation  } from "react-router-dom";
 import "./App.css";
 import TopBar from "./components/TopBar";
 import SideBar from "./components/SideBar";
 import Map from "./components/Map";
 import RegionDetail from "./components/RegionDetail";
 import { calculateRegionDiffs } from "./api/dataProcess";
+import Legend from './components/Legend';
 
 function App() {
   const [mapData, setMapData] = useState(null);
@@ -41,6 +42,7 @@ function App() {
         />
         <Route path="/region/:regionId" element={<RegionDetail />} />
       </Routes>
+      {useLocation.pathname === "/" && <Legend />}
     </Router>
   );
 }
