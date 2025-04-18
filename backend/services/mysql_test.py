@@ -36,7 +36,18 @@ class DroughtDatabase:
                 "all_regions_spi_CMIP6_ssp370_pr_ACCESS-ESM1-5.csv",
                 "all_regions_spi_CMIP6_ssp370_pr_CESM2.csv",
                 "all_regions_spi_CMIP6_ssp370_pr_CMCC-ESM2.csv",
-                "all_regions_spi_CMIP6_ssp370_pr_CNRM-ESM2-1.csv"
+                "all_regions_spi_CMIP6_ssp370_pr_CNRM-ESM2-1.csv",
+                # -----------------------------------------------
+                "all_regions_spei_CMIP6_ssp126_pr_ACCESS-CM2.csv",
+                "all_regions_spei_CMIP6_ssp126_pr_ACCESS-ESM1-5.csv",
+                "all_regions_spei_CMIP6_ssp126_pr_CESM2.csv",
+                "all_regions_spei_CMIP6_ssp126_pr_CMCC-ESM2.csv",
+                "all_regions_spei_CMIP6_ssp126_pr_CNRM-ESM2-1.csv",
+                "all_regions_spei_CMIP6_ssp370_pr_ACCESS-CM2.csv",
+                "all_regions_spei_CMIP6_ssp370_pr_ACCESS-ESM1-5.csv",
+                "all_regions_spei_CMIP6_ssp370_pr_CESM2.csv",
+                "all_regions_spei_CMIP6_ssp370_pr_CMCC-ESM2.csv",
+                "all_regions_spei_CMIP6_ssp370_pr_CNRM-ESM2-1.csv"
             ]
         else:
             self.csv_files = csv_files
@@ -60,9 +71,17 @@ class DroughtDatabase:
 
             # Generate table name based on file name
             # Example: "all_regions_spi_CMIP5_rcp45_pr_CCCma-CanESM2.csv" -> "spi_cmip5_rcp45_pr_cccma-canesm2"
-            name_part = filename.replace("all_regions_spi_", "").replace(".csv", "").lower()
-            table_name = f"spi_{name_part}"
-            self.table_names.append(table_name)
+            if filename.startswith("all_regions_spi_"):
+                index_prefix = "spi"
+                name_part = filename.replace("all_regions_spi_", "").replace(".csv", "").lower()
+            elif filename.startswith("all_regions_spei_"):
+                index_prefix = "spei"
+                name_part = filename.replace("all_regions_spei_", "").replace(".csv", "").lower()
+            else:
+                print(f"⛔️ Unrecognized filename format: {filename}")
+                continue
+
+            table_name = f"{index_prefix}_{name_part}"
 
             # Skip if the table already exists and contains data
             existing_tables = inspector.get_table_names()
@@ -102,13 +121,15 @@ class DroughtDatabase:
                         print(f"⛔️ Failed to parse time '{time_str}': {e}")
                         continue
 
+                    value_field = "SPI" if "SPI" in row else "SPEI"
+                    spi_value = row.get(value_field, None)
                     rows.append({
                         "year": year,
                         "month": month,
-                        "SPI": float(row["SPI"]) if row["SPI"] else None,
+                        "SPI": float(spi_value) if spi_value else None,  # SPEI still name SPI
                         "region_id": int(row["region_id"]),
                         "region_name": row["region_name"],
-                        "model_name": row["model_name"]  # ✅ Capture model info
+                        "model_name": row["model_name"]
                     })
 
             # Insert data into the table
