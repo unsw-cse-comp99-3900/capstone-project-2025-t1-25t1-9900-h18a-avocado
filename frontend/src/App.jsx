@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Box } from "@mui/material";
-import { BrowserRouter as Router, Routes, Route, useLocation  } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import "./App.css";
 import TopBar from "./components/TopBar";
 import SideBar from "./components/SideBar";
@@ -31,6 +31,7 @@ function App() {
           element={
             <Box display="flex" flexDirection="column" height="100vh">
               <TopBar />
+              <Legend />
               <Box display="flex" flexGrow={1}>
                 <SideBar onFetchData={handleFetchMapData} />
                 <Box flexGrow={1}>
@@ -38,11 +39,11 @@ function App() {
                 </Box>
               </Box>
             </Box>
+            
           }
         />
         <Route path="/region/:regionId" element={<RegionDetail />} />
       </Routes>
-      {useLocation.pathname === "/" && <Legend />}
     </Router>
   );
 }
