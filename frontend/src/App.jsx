@@ -14,6 +14,7 @@ function App() {
   const [filters, setFilters] = useState(null); // ✅ 新增 state 用于存 filters
 
   const handleFetchMapData = async (filters) => {
+    console.log("filters:", filters);
     try {
       setFilters(filters); // ✅ 保存 filters
       const regionDiffs = await calculateRegionDiffs(filters);

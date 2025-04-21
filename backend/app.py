@@ -1,13 +1,11 @@
 from flask import Flask, request, jsonify, send_file
 from flask_restx import Api, Resource, fields
 from flask_cors import CORS
-from services.mysql_test import DroughtDatabase  # 从 services/mysql_test.py 导入类
+from services.mysql_test import DroughtDatabase  #  services/mysql_test.py
 
-# 创建 Flask 应用
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
-# 创建 Flask-RESTX API 对象，用于生成 Swagger 文档
 api = Api(app,
           version="1.0",
           title="Drought Data API",
@@ -15,75 +13,81 @@ api = Api(app,
 
 ns = api.namespace("drought", description="Drought statistics operations")
 
-# 定义请求模型（请求体参数）
+# define models for request and response
 drought_request_model = api.model("DroughtRequest", {
-    "index": fields.String(required=True, description="系数名称，例如 spi "),
-    "data_source": fields.String(required=True, description="数据源名称，例如 CMIP5"),
-    "scenario": fields.String(required=True, description="气候条件名称，例如 rcp45"),
-    "start_year": fields.Integer(required=True, description="起始年份 (包含)"),
-    "end_year": fields.Integer(required=True, description="结束年份 (包含)"),
-    "region_id": fields.Integer(required=True, description="指定的区域 ID"),
-    "threshold": fields.Float(required=False, default=-1.0, description="SPI 阈值（默认 -1.0）")
+    "index": fields.String(required=True, description="Index name, e.g., spi"),
+    "data_source": fields.String(required=True, description="Data source, e.g., CMIP5"),
+    "scenario": fields.String(required=True, description="Climate scenario, e.g., rcp45"),
+    "model": fields.String(required=True, description="Model name, e.g. For CMIP5: 'CCCma-CanESM2', 'NCC-NorESM1-M', 'CSIRO-BOM-ACCESS1-0', 'MIROC-MIROC5', 'NOAA-GFDL-GFDL-ESM2M'. For CMIP6: 'ACCESS-CM2', 'ACCESS-ESM1-5', 'CESM2', 'CNRM-ESM2-1', 'CMCC-ESM2'"),
+    "start_year": fields.Integer(required=True, description="Start year (inclusive)"),
+    "end_year": fields.Integer(required=True, description="End year (inclusive)"),
+    "region_id": fields.Integer(required=True, description="Region ID"),
+    "threshold": fields.Float(required=False, default=-1.0, description="SPI threshold (default -1.0)")
 })
+
 scenario_model = api.model("ScenarioRequest", {
-    "scenario": fields.String(required=True, description="气候条件名称，例如 rcp45")
+    "scenario": fields.String(required=True, description="e.g. rcp45")
 })
-# 创建 DroughtDatabase 对象并加载 CSV 数据（注意：首次运行会导入数据）
+
+# create a DroughtDatabase instance to load data from CSV files
 db_loader = DroughtDatabase()
 db_loader.load_csv_files()
 
 @ns.route("/drought-month-count")
 class DroughtMonthCount(Resource):
-    @ns.doc("get_drought_month_count", description="统计指定区域在指定年份范围内满足 SPI < threshold 的干旱独立月份数")
+    @ns.doc("get_drought_month_count", description="count the number of drought months in a specified region within a specified year range")
     @ns.expect(drought_request_model)
     def post(self):
         data = request.get_json()
         index = data.get("index")
         data_source = data.get("data_source")
         scenario = data.get("scenario")
+        model = data.get("model")
         start_year = data.get("start_year")
         end_year = data.get("end_year")
         region_id = data.get("region_id")
         threshold = data.get("threshold", -1.0)
-        count = db_loader.get_drought_month_count_for_region(index, data_source, scenario, start_year, end_year, region_id, threshold)
+        count = db_loader.get_drought_month_count_for_region(index, data_source, scenario, model,start_year, end_year, region_id, threshold)
         return {"success": True, "drought_month_count": count}
 
 @ns.route("/drought-months-details")
 class DroughtMonthsDetails(Resource):
-    @ns.doc("get_drought_months_details", description="返回指定区域在指定年份范围内满足 SPI < threshold 的所有干旱月份（格式 'YYYY-MM'）")
+    @ns.doc("get_drought_months_details", description="return the details of drought months (format: 'YYYY-MM'）")
     @ns.expect(drought_request_model)
     def post(self):
         data = request.get_json()
         index = data.get("index")
         scenario = data.get("scenario")
         data_source = data.get("data_source")
+        model = data.get("model")
         start_year = data.get("start_year")
         end_year = data.get("end_year")
         region_id = data.get("region_id")
         threshold = data.get("threshold", -1.0)
-        details = db_loader.get_drought_months_details_for_region(index, data_source, scenario, start_year, end_year, region_id, threshold)
+        details = db_loader.get_drought_months_details_for_region(index, data_source, scenario,model, start_year, end_year, region_id, threshold)
         details_formatted = [f"{y}-{m:02d}" for (y, m) in details]
         return {"success": True, "drought_months_details": details_formatted}
 
 @ns.route("/drought-event-count")
 class DroughtEventCount(Resource):
-    @ns.doc("get_drought_event_count", description="统计指定区域在指定年份范围内的干旱事件数量（连续 ≥2 个月算作一个事件），并返回事件的起始和结束时间")
+    @ns.doc("get_drought_event_count", description="count drought events (>=2 months)")
     @ns.expect(drought_request_model)
     def post(self):
         data = request.get_json()
         index = data.get("index")
         scenario = data.get("scenario")
         data_source = data.get("data_source")
+        model = data.get("model")
         start_year = data.get("start_year")
         end_year = data.get("end_year")
         region_id = data.get("region_id")
         threshold = data.get("threshold", -1.0)
-        events = db_loader.get_drought_events_for_region(index, data_source, scenario, start_year, end_year, region_id, threshold)
+        events = db_loader.get_drought_events_for_region(index, data_source, scenario,model, start_year, end_year, region_id, threshold)
         return {"success": True, "drought_events": events}
 
 @ns.route("/regions")
 class Regions(Resource):
-    @ns.doc("get_regions", description="返回所有数据表中不同的区域信息（region_id 和 region_name）")
+    @ns.doc("get_regions", description="return all the regions（region_id abd region_name）")
     @ns.expect(scenario_model)
     def post(self):
         data = request.get_json()

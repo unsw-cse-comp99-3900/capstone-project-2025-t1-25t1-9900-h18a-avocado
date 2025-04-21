@@ -24,13 +24,14 @@ def extract_precipitation_mm_per_day(ds: xr.Dataset) -> xr.DataArray:
 
 
 def compute_spi_for_region(
-    model_family: str,
-    scenario: str,
-    pr_region: xr.DataArray,
-    region_id: int,
-    region_name: str,
-    cal_start: str = "1976-01-01",
-    cal_end: str = "2005-12-31"
+        model_family: str,
+        scenario: str,
+        model_name: str,
+        pr_region: xr.DataArray,
+        region_id: int,
+        region_name: str,
+        cal_start: str = "1976-01-01",
+        cal_end: str = "2005-12-31"
 ) -> pd.DataFrame:
     """
     Compute SPI time series for a specific region using its precipitation data.
@@ -44,6 +45,7 @@ def compute_spi_for_region(
 
     Returns:
         pd.DataFrame containing columns: time, SPI, region_id, region_name
+        :param model_name:
     """
     try:
         spi = standardized_precipitation_index(
@@ -66,6 +68,7 @@ def compute_spi_for_region(
         df["region_name"] = region_name
         df["model_family"] = model_family
         df["scenario"] = scenario
+        df["model_name"] = model_name
 
         return df
 
@@ -74,7 +77,7 @@ def compute_spi_for_region(
         return pd.DataFrame(columns=["time", "SPI", "region_id", "region_name"])
 
 
-def export_all_regions_spi_to_csv(region_dict, model_family, scenario, variable, cal_start, cal_end):
+def export_all_regions_spi_to_csv(region_dict, model_family, scenario, model_name, variable, cal_start, cal_end):
     """
     Compute SPI for all regions and export the results to a single CSV file.
 
@@ -85,6 +88,7 @@ def export_all_regions_spi_to_csv(region_dict, model_family, scenario, variable,
         variable: str, e.g., pr
         cal_start: str, calibration period start
         cal_end: str, calibration period end
+
     """
     all_spi_dfs = []
     print("🌏 Starting SPI computation for all regions...")
@@ -93,28 +97,32 @@ def export_all_regions_spi_to_csv(region_dict, model_family, scenario, variable,
         region_name = info["name"]
         pr_region = info["data"]
         print(f"📍 Processing region: {region_id} - {region_name}")
-        df_spi = compute_spi_for_region(model_family, scenario,pr_region, region_id, region_name, cal_start, cal_end)
+        df_spi = compute_spi_for_region(model_family, scenario,model_name, pr_region, region_id, region_name, cal_start, cal_end)
         all_spi_dfs.append(df_spi)
 
     all_spi_df = pd.concat(all_spi_dfs, ignore_index=True)
-    output_path = f"all_regions_spi_{model_family}_{scenario}_{variable}.csv"
+    output_path = f"all_regions_spi_{model_family}_{scenario}_{variable}_{model_name}.csv"
     all_spi_df.to_csv(output_path, index=False)
 
     print(f"[✅] All region SPI results saved to: {output_path}")
     print(f"[📊] Successfully computed SPI for {all_spi_df['region_id'].nunique()} out of {len(region_dict)} regions.")
 
-def compute_spi(model_family, scenario, variable, cal_start, cal_end):
-    ds = load_data(model_family, scenario, variable)
+
+def compute_spi(model_family, scenario, model_name, variable, cal_start, cal_end):
+    ds = load_data(model_family, scenario, variable, model_name)
     pr = extract_precipitation_mm_per_day(ds)
 
     shapefile_path = get_shapefile_path()
     region_dict = extract_regions_from_shapefile(shapefile_path, pr)
 
-    export_all_regions_spi_to_csv(region_dict, model_family, scenario, variable, cal_start, cal_end)
+    export_all_regions_spi_to_csv(region_dict, model_family, scenario, model_name, variable, cal_start, cal_end)
+
 
 if __name__ == "__main__":
+    CMIP5_models = ['CCCma-CanESM2', 'NCC-NorESM1-M', 'CSIRO-BOM-ACCESS1-0', 'MIROC-MIROC5', 'NOAA-GFDL-GFDL-ESM2M']
+    CMIP6_models = ['ACCESS-CM2', 'ACCESS-ESM1-5', 'CESM2', 'CNRM-ESM2-1', 'CMCC-ESM2']
 
-    compute_spi("CMIP5", "rcp45", "pr", "1976-01-01", "2005-12-31")
-    compute_spi("CMIP5", "rcp85", "pr", "1976-01-01", "2005-12-31")
-    compute_spi("CMIP6", "ssp126", "pr", "1976-01-01", "2005-12-31")
-    compute_spi("CMIP6", "ssp370", "pr", "1976-01-01", "2005-12-31")
+
+    for model_name in CMIP6_models:
+        compute_spi("CMIP6", "ssp370", model_name=model_name, variable="pr", cal_start="1976-01-01", cal_end="2005-12-31")
+

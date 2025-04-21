@@ -9,29 +9,69 @@ from datetime import datetime
 class DroughtDatabase:
     def __init__(self, db_url="sqlite:///drought_system.db", csv_files=None):
         """
-        初始化数据库连接、元数据和 CSV 文件列表。
-        默认使用 SQLite 数据库，生成的数据库文件 drought_system.db 会在当前工作目录下创建。
+        initialize the database connection and load CSV files to the database.
+        :param db_url: the database URL, default is "sqlite:///drought_system.db"
+        :param csv_files: a list of CSV file names, default is None, which means all CSV files in the same directory will be loaded.
         """
         self.engine = create_engine(db_url)
         self.metadata = MetaData()
         if csv_files is None:
             self.csv_files = [
-                "all_regions_spi_CMIP5_rcp45_pr.csv",
-                "all_regions_spi_CMIP5_rcp85_pr.csv",
-                "all_regions_spi_CMIP6_ssp126_pr.csv",
-                "all_regions_spi_CMIP6_ssp370_pr.csv"
+                "all_regions_spi_CMIP5_rcp45_pr_CCCma-CanESM2.csv",
+                "all_regions_spi_CMIP5_rcp45_pr_CSIRO-BOM-ACCESS1-0.csv",
+                "all_regions_spi_CMIP5_rcp45_pr_MIROC-MIROC5.csv",
+                "all_regions_spi_CMIP5_rcp45_pr_NCC-NorESM1-M.csv",
+                "all_regions_spi_CMIP5_rcp45_pr_NOAA-GFDL-GFDL-ESM2M.csv",
+                "all_regions_spi_CMIP5_rcp85_pr_CCCma-CanESM2.csv",
+                "all_regions_spi_CMIP5_rcp85_pr_CSIRO-BOM-ACCESS1-0.csv",
+                "all_regions_spi_CMIP5_rcp85_pr_MIROC-MIROC5.csv",
+                "all_regions_spi_CMIP5_rcp85_pr_NCC-NorESM1-M.csv",
+                "all_regions_spi_CMIP5_rcp85_pr_NOAA-GFDL-GFDL-ESM2M.csv",
+                "all_regions_spi_CMIP6_ssp126_pr_ACCESS-CM2.csv",
+                "all_regions_spi_CMIP6_ssp126_pr_ACCESS-ESM1-5.csv",
+                "all_regions_spi_CMIP6_ssp126_pr_CESM2.csv",
+                "all_regions_spi_CMIP6_ssp126_pr_CMCC-ESM2.csv",
+                "all_regions_spi_CMIP6_ssp126_pr_CNRM-ESM2-1.csv",
+                "all_regions_spi_CMIP6_ssp370_pr_ACCESS-CM2.csv",
+                "all_regions_spi_CMIP6_ssp370_pr_ACCESS-ESM1-5.csv",
+                "all_regions_spi_CMIP6_ssp370_pr_CESM2.csv",
+                "all_regions_spi_CMIP6_ssp370_pr_CMCC-ESM2.csv",
+                "all_regions_spi_CMIP6_ssp370_pr_CNRM-ESM2-1.csv",
+                # -----------------------------------------------
+                "all_regions_spei_CMIP5_rcp45_pr_CCCma-CanESM2.csv",
+                "all_regions_spei_CMIP5_rcp45_pr_CSIRO-BOM-ACCESS1-0.csv",
+                "all_regions_spei_CMIP5_rcp45_pr_MIROC-MIROC5.csv",
+                "all_regions_spei_CMIP5_rcp45_pr_NCC-NorESM1-M.csv",
+                "all_regions_spei_CMIP5_rcp45_pr_NOAA-GFDL-GFDL-ESM2M.csv",
+                "all_regions_spei_CMIP5_rcp85_pr_CCCma-CanESM2.csv",
+                "all_regions_spei_CMIP5_rcp85_pr_CSIRO-BOM-ACCESS1-0.csv",
+                "all_regions_spei_CMIP5_rcp85_pr_MIROC-MIROC5.csv",
+                "all_regions_spei_CMIP5_rcp85_pr_NCC-NorESM1-M.csv",
+                "all_regions_spei_CMIP5_rcp85_pr_NOAA-GFDL-GFDL-ESM2M.csv",
+                "all_regions_spei_CMIP6_ssp126_pr_ACCESS-CM2.csv",
+                "all_regions_spei_CMIP6_ssp126_pr_ACCESS-ESM1-5.csv",
+                "all_regions_spei_CMIP6_ssp126_pr_CESM2.csv",
+                "all_regions_spei_CMIP6_ssp126_pr_CMCC-ESM2.csv",
+                "all_regions_spei_CMIP6_ssp126_pr_CNRM-ESM2-1.csv",
+                "all_regions_spei_CMIP6_ssp370_pr_ACCESS-CM2.csv",
+                "all_regions_spei_CMIP6_ssp370_pr_ACCESS-ESM1-5.csv",
+                "all_regions_spei_CMIP6_ssp370_pr_CESM2.csv",
+                "all_regions_spei_CMIP6_ssp370_pr_CMCC-ESM2.csv",
+                "all_regions_spei_CMIP6_ssp370_pr_CNRM-ESM2-1.csv"
             ]
         else:
             self.csv_files = csv_files
-        self.table_names = []  # 存储所有生成的表名
+
+        self.table_names = []
         self.base_path = os.path.dirname(os.path.abspath(__file__))
         self.Session = sessionmaker(bind=self.engine)
 
     def load_csv_files(self):
         """
-        遍历 CSV 文件，读取数据，将 time 字段拆分为 year 和 month，
-        并将数据插入到对应的表中。表名根据 CSV 文件名动态生成。
-        如果表已存在且有数据，则跳过导入。
+        Load all CSV files defined in self.csv_files.
+        Each CSV file contains SPI time series for different regions and a specific model.
+        The function creates corresponding tables (one per CSV), parses time into year/month,
+        and includes the model name. If the table already exists and has data, it skips re-import.
         """
         inspector = inspect(self.engine)
 
@@ -39,12 +79,21 @@ class DroughtDatabase:
             file_path = os.path.join(self.base_path, filename)
             print(f"📥 Loading: {filename}")
 
-            # 生成表名，例如 "all_regions_spi_CMIP5_rcp45_pr.csv" -> "spi_cmip5_rcp45"
-            name_part = filename.replace("all_regions_spi_", "").replace("_pr.csv", "").lower()
-            table_name = f"spi_{name_part}"
-            self.table_names.append(table_name)
+            # Generate table name based on file name
+            # Example: "all_regions_spi_CMIP5_rcp45_pr_CCCma-CanESM2.csv" -> "spi_cmip5_rcp45_pr_cccma-canesm2"
+            if filename.startswith("all_regions_spi_"):
+                index_prefix = "spi"
+                name_part = filename.replace("all_regions_spi_", "").replace(".csv", "").lower()
+            elif filename.startswith("all_regions_spei_"):
+                index_prefix = "spei"
+                name_part = filename.replace("all_regions_spei_", "").replace(".csv", "").lower()
+            else:
+                print(f"⛔️ Unrecognized filename format: {filename}")
+                continue
 
-            # 检查表是否存在以及是否已有数据
+            table_name = f"{index_prefix}_{name_part}"
+
+            # Skip if the table already exists and contains data
             existing_tables = inspector.get_table_names()
             if table_name in existing_tables:
                 table = Table(table_name, self.metadata, autoload_with=self.engine)
@@ -54,7 +103,7 @@ class DroughtDatabase:
                         print(f"⚠️ Table {table_name} already has {count} records. Skipping import.")
                         continue
 
-            # 定义表结构，将 time 拆分为 year 和 month 两列
+            # Define table structure with additional "model_name" column
             table = Table(
                 table_name, self.metadata,
                 Column("id", Integer, primary_key=True, autoincrement=True),
@@ -62,40 +111,47 @@ class DroughtDatabase:
                 Column("month", Integer),
                 Column("SPI", Float),
                 Column("region_id", Integer),
-                Column("region_name", String(100))
+                Column("region_name", String(100)),
+                Column("model_name", String(100))
             )
 
-            # 创建表（如果不存在）
+            # Create the table if not exists
             self.metadata.create_all(self.engine, tables=[table])
 
             rows = []
             with open(file_path, mode="r", encoding="utf-8") as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-                    time_str = row["time"]  # 格式例如 "1960-01"
+                    time_str = row["time"]  # Expected format: "YYYY-MM"
                     try:
                         year_str, month_str = time_str.split('-')
                         year = int(year_str)
                         month = int(month_str)
                     except Exception as e:
-                        print(f"Parse time {time_str} failed: {e}")
+                        print(f"⛔️ Failed to parse time '{time_str}': {e}")
                         continue
+
+                    value_field = "SPI" if "SPI" in row else "SPEI"
+                    spi_value = row.get(value_field, None)
                     rows.append({
                         "year": year,
                         "month": month,
-                        "SPI": float(row["SPI"]) if row["SPI"] else None,
+                        "SPI": float(spi_value) if spi_value else None,  # SPEI still name SPI
                         "region_id": int(row["region_id"]),
-                        "region_name": row["region_name"]
+                        "region_name": row["region_name"],
+                        "model_name": row["model_name"]
                     })
 
+            # Insert data into the table
             with self.engine.connect() as conn:
                 conn.execute(table.insert(), rows)
                 conn.commit()
+
             print(f"✅ Load success: {table_name}")
 
         print("✅ All data loaded to drought_system.db database.")
 
-    # 其他方法保持不变...
+
     def get_regions_for_model(self, model_identifier):
         regions = {}
         with self.engine.connect() as conn:
@@ -108,8 +164,9 @@ class DroughtDatabase:
                         regions[row['region_id']] = row['region_name']
         return [{"region_id": rid, "region_name": rname} for rid, rname in regions.items()]
 
-    def get_drought_month_count_for_region(self, index, data_source, scenario, start_year, end_year, region_id, threshold=-1.0):
-        table_name = f"{index.lower()}_{data_source.lower()}_{scenario.lower()}"
+    def get_drought_month_count_for_region(self, index, data_source, scenario, model_name, start_year, end_year, region_id, threshold=-1.0):
+        table_name = f"{index.lower()}_{data_source.lower()}_{scenario.lower()}_pr_{model_name.lower()}"
+
         table = Table(table_name, self.metadata, autoload_with=self.engine)
         session = self.Session()
         stmt = select(func.count(func.distinct((table.c.year * 100) + table.c.month))).where(
@@ -121,8 +178,9 @@ class DroughtDatabase:
         session.close()
         return count if count is not None else 0
 
-    def get_drought_events_for_region(self, index, data_source, scenario, start_year, end_year, region_id, threshold=-1.0):
-        table_name = f"{index.lower()}_{data_source.lower()}_{scenario.lower()}"
+    def get_drought_events_for_region(self, index, data_source, scenario, model_name,start_year, end_year, region_id, threshold=-1.0):
+
+        table_name = f"{index.lower()}_{data_source.lower()}_{scenario.lower()}_pr_{model_name.lower()}"
         table = Table(table_name, self.metadata, autoload_with=self.engine)
         session = self.Session()
         stmt = select(table.c.year, table.c.month).where(
@@ -168,8 +226,8 @@ class DroughtDatabase:
             })
         return events
 
-    def get_drought_months_details_for_region(self, index, data_source, scenario, start_year, end_year, region_id, threshold=-1.0):
-        table_name = f"{index.lower()}_{data_source.lower()}_{scenario.lower()}"
+    def get_drought_months_details_for_region(self, index, data_source, scenario, model_name, start_year, end_year, region_id, threshold=-1.0):
+        table_name = f"{index.lower()}_{data_source.lower()}_{scenario.lower()}_pr_{model_name.lower()}"
         table = Table(table_name, self.metadata, autoload_with=self.engine)
         session = self.Session()
         stmt = select(table.c.year, table.c.month).where(
@@ -185,33 +243,7 @@ class DroughtDatabase:
 if __name__ == "__main__":
     db_loader = DroughtDatabase()
     db_loader.load_csv_files()
+    CMIP5_models = ['CCCma-CanESM2', 'NCC-NorESM1-M', 'CSIRO-BOM-ACCESS1-0', 'MIROC-MIROC5', 'NOAA-GFDL-GFDL-ESM2M']
+    CMIP6_models = ['ACCESS-CM2', 'ACCESS-ESM1-5', 'CESM2', 'CNRM-ESM2-1', 'CMCC-ESM2']
 
-    # 示例：获取模型 "rcp45" 的区域信息
-    regions_rcp45 = db_loader.get_regions_for_model("rcp45")
-    print("Regions for model rcp45:")
-    for region in regions_rcp45:
-        print(region)
 
-    # 示例：统计模型 "spi_cmip6_ssp370" 中 region_id 为 3050，
-    # 在 2030 到 2060 年期间的干旱独立月份数（SPI < -1.0）
-    index = "spi"
-    data_source = "cmip6"
-    scenario = "ssp370"
-    region_id = 3050
-    drought_months = db_loader.get_drought_month_count_for_region(index, data_source, scenario, 2030, 2060, region_id, threshold=-1.0)
-    print(f"Drought months count  for region {region_id} from 2030 to 2060: {drought_months}")
-
-    # 示例：获取指定 region 在模型 "spi_cmip6_ssp370" 中，
-    # 在 2030 到 2060 年期间的所有干旱月份 (year, month)
-    drought_details = db_loader.get_drought_months_details_for_region(index, data_source, scenario, 2030, 2060, region_id,
-                                                                      threshold=-1.0)
-    print(f"Drought months details for region {region_id} from 2030 to 2060:")
-    for y, m in drought_details:
-        print(f"{y}-{m:02d}")
-
-    # 示例：统计并列出模型 "spi_cmip6_ssp370" 中 region_id 为 3050，
-    # 在 2030 到 2060 年期间的干旱事件（连续干旱月为一个事件，单月不计）
-    drought_events = db_loader.get_drought_events_for_region(index, data_source, scenario, 2030, 2060, region_id, threshold=-1.0)
-    print(f"Drought events for region {region_id} from 2030 to 2060:")
-    for event in drought_events:
-        print(event)
