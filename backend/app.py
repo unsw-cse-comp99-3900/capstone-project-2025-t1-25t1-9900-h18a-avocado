@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, send_file
 from flask_restx import Api, Resource, fields
 from flask_cors import CORS
-from services.mysql_test import DroughtDatabase  # 从 services/mysql_test.py 导入类
+from services.mysql_test import DroughtDatabase  #  services/mysql_test.py
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)

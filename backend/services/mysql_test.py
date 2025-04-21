@@ -38,6 +38,16 @@ class DroughtDatabase:
                 "all_regions_spi_CMIP6_ssp370_pr_CMCC-ESM2.csv",
                 "all_regions_spi_CMIP6_ssp370_pr_CNRM-ESM2-1.csv",
                 # -----------------------------------------------
+                "all_regions_spei_CMIP5_rcp45_pr_CCCma-CanESM2.csv",
+                "all_regions_spei_CMIP5_rcp45_pr_CSIRO-BOM-ACCESS1-0.csv",
+                "all_regions_spei_CMIP5_rcp45_pr_MIROC-MIROC5.csv",
+                "all_regions_spei_CMIP5_rcp45_pr_NCC-NorESM1-M.csv",
+                "all_regions_spei_CMIP5_rcp45_pr_NOAA-GFDL-GFDL-ESM2M.csv",
+                "all_regions_spei_CMIP5_rcp85_pr_CCCma-CanESM2.csv",
+                "all_regions_spei_CMIP5_rcp85_pr_CSIRO-BOM-ACCESS1-0.csv",
+                "all_regions_spei_CMIP5_rcp85_pr_MIROC-MIROC5.csv",
+                "all_regions_spei_CMIP5_rcp85_pr_NCC-NorESM1-M.csv",
+                "all_regions_spei_CMIP5_rcp85_pr_NOAA-GFDL-GFDL-ESM2M.csv",
                 "all_regions_spei_CMIP6_ssp126_pr_ACCESS-CM2.csv",
                 "all_regions_spei_CMIP6_ssp126_pr_ACCESS-ESM1-5.csv",
                 "all_regions_spei_CMIP6_ssp126_pr_CESM2.csv",
@@ -235,4 +245,5 @@ if __name__ == "__main__":
     db_loader.load_csv_files()
     CMIP5_models = ['CCCma-CanESM2', 'NCC-NorESM1-M', 'CSIRO-BOM-ACCESS1-0', 'MIROC-MIROC5', 'NOAA-GFDL-GFDL-ESM2M']
     CMIP6_models = ['ACCESS-CM2', 'ACCESS-ESM1-5', 'CESM2', 'CNRM-ESM2-1', 'CMCC-ESM2']
+
 
