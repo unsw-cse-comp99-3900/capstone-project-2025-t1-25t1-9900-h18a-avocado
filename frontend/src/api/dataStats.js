@@ -1,4 +1,5 @@
 import regionApi from "./regionApi";
+import regions from "../data/regions";
 
 // 定义CMIP5和CMIP6的模型
 const CMIP5_MODELS = [
@@ -13,6 +14,12 @@ const CMIP6_MODELS = [
 // 获取模型的函数
 const getModels = (source) => {
   return source === 'CMIP5' ? CMIP5_MODELS : CMIP6_MODELS;
+};
+
+const getRegionName = (regionId) => {
+  const numericId = parseInt(regionId);
+  const region = regions.find(r => r.region_id === numericId);
+  return region ? region.region_name : "Unknown Region";
 };
 
 // 获取原始数据：返回所有模型的baseline和future数据
@@ -79,10 +86,13 @@ export const fetchRegionStats = async (filters, regionId) => {
     baselineDataByScenario[scenario] = baselineDataByModel;
     futureDataByScenario[scenario] = futureDataByModel;
   }
+  // 获取区域名称
+  const regionName = getRegionName(regionId);
 
   // 返回该区域的 baseline 和 future 数据，使用模型名称作为键
   return {
     region_id: regionId,
+    region_name: regionName,
     baselineData: baselineDataByScenario,
     futureData: futureDataByScenario,
   };
