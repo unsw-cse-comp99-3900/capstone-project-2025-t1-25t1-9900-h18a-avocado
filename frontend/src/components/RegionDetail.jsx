@@ -4,9 +4,10 @@ import { Chart, registerables } from 'chart.js';
 import { Box, Typography, Paper } from '@mui/material';
 import { useLocation } from 'react-router-dom';
 
+// Register Chart.js components
 Chart.register(...registerables);
 
-// 模型名称映射 (根据实际数据调整)
+// Mapping of model IDs to display names
 const MODEL_NAMES = {
   model1: 'Model A',
   model2: 'Model B', 
@@ -15,7 +16,7 @@ const MODEL_NAMES = {
   model5: 'Model E'
 };
 
-// 场景显示配置
+// Configuration for different climate scenarios (colors and display names)
 const SCENARIO_CONFIG = {
   rcp45: { name: 'RCP4.5', color: 'rgba(75, 192, 192, 0.7)' },
   rcp85: { name: 'RCP8.5', color: 'rgba(255, 99, 132, 0.7)' },
@@ -24,6 +25,7 @@ const SCENARIO_CONFIG = {
 };
 
 const RegionDetail = () => {
+  // Get state from route location
   const { state } = useLocation();
   const { 
     filters = {}, 
@@ -32,21 +34,21 @@ const RegionDetail = () => {
     region_name 
   } = state || {};
 
-  // 数据处理函数
+  // Process model data to extract available models and scenarios
   const processModelData = () => {
     if (!stats.baselineData || !stats.futureData) return { models: [], scenarios: [] };
     
-    // 获取所有模型名称 (从baselineData的第一个场景中提取)
+    // Get all model names from the first scenario in baselineData
     const firstScenario = Object.keys(stats.baselineData)[0];
     const models = Object.keys(stats.baselineData[firstScenario] || {});
     
-    // 获取所有场景
+    // Get all available scenarios
     const scenarios = Object.keys(stats.futureData);
     
     return { models, scenarios };
   };
 
-  // 计算百分比变化
+  // Calculate percentage change between baseline and future data
   const calculatePercentageChange = (baseline, future) => {
     if (!baseline || baseline.length === 0) return 0;
     const baseAvg = baseline.reduce((a, b) => a + b, 0) / baseline.length;
@@ -54,7 +56,7 @@ const RegionDetail = () => {
     return ((futureAvg - baseAvg) / baseAvg * 100).toFixed(1);
   };
 
-  // 生成图表数据
+  // Generate chart data based on type (percentage or absolute values)
   const generateChartData = (type) => {
     const { models, scenarios } = processModelData();
     const isPercentage = type === 'percentage';
@@ -77,26 +79,26 @@ const RegionDetail = () => {
             
             return isPercentage 
               ? calculatePercentageChange(baseline, future)
-              : future.length; // 或使用其他计算方式
+              : future.length; // For absolute values, use the count directly
           })
         };
       })
     };
   };
 
-  // 动态计算Y轴范围
+  // Calculate dynamic axis range based on data values
   const calculateAxisRange = (data, isPercentage = false) => {
     const allValues = data.datasets.flatMap(d => d.data);
     const max = Math.max(...allValues);
     const min = Math.min(...allValues);
     
     return {
-      min: isPercentage ? Math.floor(min / 10) * 10 : 0,
-      max: isPercentage ? Math.ceil(max / 10) * 10 : Math.ceil(max / 10) * 10
+      min: isPercentage ? Math.floor(min / 10) * 10 : 0, // Round down to nearest 10 for percentages
+      max: isPercentage ? Math.ceil(max / 10) * 10 : Math.ceil(max / 10) * 10 // Round up to nearest 10
     };
   };
 
-  // 图表配置生成器
+  // Generate chart options configuration
   const getChartOptions = (isPercentage) => {
     const data = generateChartData(isPercentage ? 'percentage' : 'absolute');
     const { min, max } = calculateAxisRange(data, isPercentage);
@@ -125,6 +127,7 @@ const RegionDetail = () => {
     };
   };
 
+  // Handle missing state
   if (!state) {
     return (
       <Box sx={{ p: 3, textAlign: 'center' }}>
@@ -133,17 +136,19 @@ const RegionDetail = () => {
     );
   }
 
+  // Determine chart title based on filter definition
   const chartTitle = filters.Definition === 'Change in Number' 
     ? 'Projected change in number of events' 
     : 'Projected change in drought length';
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
-      {/* 修改标题部分，使用region_name */}
+      {/* Main title showing region name or fallback to region ID */}
       <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
         Drought Analysis - {region_name || `Region ${region_id}`}
       </Typography>
       
+      {/* Information card showing key parameters */}
       <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
         <Typography variant="h6">
           <strong>Index:</strong> {filters.Drought_Index}
@@ -159,7 +164,7 @@ const RegionDetail = () => {
         </Typography>
       </Paper>
 
-      {/* 百分比变化图表 */}
+      {/* Percentage change chart */}
       <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
         <Typography variant="h5" gutterBottom>
           {chartTitle} (%)
@@ -172,7 +177,7 @@ const RegionDetail = () => {
         </Box>
       </Paper>
 
-      {/* 绝对值图表 */}
+      {/* Absolute values chart */}
       <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
         <Typography variant="h5" gutterBottom>
           {chartTitle} ({filters.Definition === 'Change in Number' ? 'number' : 'month'})
