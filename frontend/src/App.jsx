@@ -7,12 +7,14 @@ import SideBar from "./components/SideBar";
 import Map from "./components/Map";
 import RegionDetail from "./components/RegionDetail";
 import { calculateRegionDiffs } from "./api/dataProcess";
+import Legend from './components/Legend';
 
 function App() {
   const [mapData, setMapData] = useState(null);
   const [filters, setFilters] = useState(null); // ✅ 新增 state 用于存 filters
 
   const handleFetchMapData = async (filters) => {
+    console.log("filters:", filters);
     try {
       setFilters(filters); // ✅ 保存 filters
       const regionDiffs = await calculateRegionDiffs(filters);
@@ -30,6 +32,7 @@ function App() {
           element={
             <Box display="flex" flexDirection="column" height="100vh">
               <TopBar />
+              <Legend />
               <Box display="flex" flexGrow={1}>
                 <SideBar onFetchData={handleFetchMapData} />
                 <Box flexGrow={1}>
@@ -37,6 +40,7 @@ function App() {
                 </Box>
               </Box>
             </Box>
+            
           }
         />
         <Route path="/region/:regionId" element={<RegionDetail />} />

@@ -17,7 +17,7 @@ const dropDownContent = {
     options: ["", "Change in Number", "Change in Length"]
   },
   "Drought Index": {
-    options: ["", "SPI", "SPEI", "PDSI"]
+    options: ["", "SPI", "SPEI"]
   },
   "Time Frames": {
     options: ["", "2006-2035", "2036-2065", "2066-2095"]
