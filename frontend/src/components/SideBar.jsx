@@ -12,7 +12,8 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  TextField
 } from "@mui/material";
 import SettingsInputSvideoIcon from "@mui/icons-material/SettingsInputSvideo";
 import ListIcon from "@mui/icons-material/List";
@@ -95,13 +96,33 @@ function SideBar({ onFetchData }) {
         </List>
 
         <Box sx={{ p: 2 }}>
-          <Typography variant="subtitle2">Threshold</Typography>
-          <input
+          <Typography variant="subtitle1" sx={{ mb: 1, fontSize: "1rem" }}>
+            Threshold for Drought Index
+          </Typography>
+          <TextField
             type="number"
-            step="0.1"
+            variant="outlined"
+            size="small"
+            fullWidth
             placeholder="-1"
-            style={{ width: "100%", padding: "4px" }}
+            inputProps={{ step: 0.1 }}
             onChange={(e) => handleSelectionChange("Threshold", e.target.value)}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                backgroundColor: '#fafafa', // 背景色更浅，增强对比度
+                borderRadius: '5px',
+                '& fieldset': {
+                  borderColor: '#1e78d0', // 边框颜色一致
+                },
+                '&:hover fieldset': {
+                  borderColor: '#1565c0', // 鼠标悬停时，边框颜色加深
+                },
+              },
+              '& .MuiInputBase-input': {
+                padding: '10px', // 增加内边距，改善可读性
+                fontSize: '1rem', // 增大字体大小，提升可读性
+              },
+            }}
           />
         </Box>
 
@@ -116,62 +137,117 @@ function SideBar({ onFetchData }) {
       <Divider sx={{ my: 1 }} />
 
       {/* ✅ 下半部分：Explanations 区域 */}
-      <Box sx={{ flexGrow: 0, overflow: "auto", p: 2 }}> {/* ✅ 让 Explanations 保持固定高度 */}
+      <Box sx={{ flexGrow: 0, overflow: "auto", p: 2 }}>
+        {/* 解释区域 */}
         <Typography variant="h6" align="center" sx={{ fontWeight: "bold", mb: 1 }}>
           Explanations
         </Typography>
 
         <Typography variant="body2" align="center">
-          Learn about drought indices, calculation methods, and climate models.
+          Learn about each of the functions and their specific roles in analyzing drought data.
         </Typography>
 
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mt: 2 }}>
+          {/* Definition */}
           <Button
             variant="outlined"
             size="small"
             startIcon={<InfoIcon />}
-            onClick={() => handleOpenDialog("The Standard Precipitation Index (SPI) is a relatively new drought index based only on precipitation. It's an index based on the probability of precipitation for any time scale.")}
+            onClick={() =>
+              handleOpenDialog(
+                "Definition allows you to select the type of drought change you are analyzing. Options include 'Change in Number' or 'Change in Length', helping determine the method of analysis for drought severity."
+              )
+            }
           >
-            SPI
+            Definition
           </Button>
 
+          {/* Drought Index Explanation */}
           <Button
             variant="outlined"
             size="small"
             startIcon={<InfoIcon />}
-            onClick={() => handleOpenDialog("The Standardized Precipitation Evapotranspiration Index (SPEI) is a multiscalar drought index based on climatic data. It can be used for determining the onset, duration and magnitude of drought conditions with respect to normal conditions in a variety of natural and managed systems such as crops, ecosystems, rivers, water resources, etc.")}
+            onClick={() =>
+              handleOpenDialog(
+                "Drought Index: SPI (Standard Precipitation Index) is based on precipitation and provides insights into precipitation anomalies over various time scales. SPEI (Standardized Precipitation Evapotranspiration Index) incorporates temperature and precipitation, providing a more comprehensive measure of drought severity."
+              )
+            }
           >
-            SPEI
+            Drought Index
           </Button>
 
+          {/* Time Frames Explanation */}
           <Button
             variant="outlined"
             size="small"
             startIcon={<InfoIcon />}
-            onClick={() => handleOpenDialog("The Palmer Drought Severity Index (PDSI) is a standardized index based on a simplified soil water balance and estimates relative soil moisture conditions.")}
+            onClick={() =>
+              handleOpenDialog(
+                "Time Frames allows you to define the period over which the drought analysis will be conducted. It helps select the projection periods to observe future trends and comparisons."
+              )
+            }
           >
-            PDSI
+            Time Frames
           </Button>
 
+          {/* Source Explanation */}
           <Button
             variant="outlined"
             size="small"
             startIcon={<InfoIcon />}
-            onClick={() => handleOpenDialog("Calculation Methods: Drought indices are calculated using precipitation, temperature, and other climate factors.")}
+            onClick={() =>
+              handleOpenDialog(
+                "Source refers to the selection of climate models. For CMIP5, the models include 'CCCma-CanESM2', 'NCC-NorESM1-M', 'CSIRO-BOM-ACCESS1-0', 'MIROC-MIROC5', 'NOAA-GFDL-GFDL-ESM2M'. For CMIP6, the models include 'ACCESS-CM2', 'ACCESS-ESM1-5', 'CESM2', 'CNRM-ESM2-1', 'CMCC-ESM2'."
+              )
+            }
+          >
+            Source
+          </Button>
+
+          {/* Scenario Explanation */}
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<InfoIcon />}
+            onClick={() =>
+              handleOpenDialog(
+                "Scenario refers to the specific emissions or environmental pathways that model future climate projections. For CMIP5, available scenarios are 'RCP4.5' and 'RCP8.5'. For CMIP6, available scenarios are 'SSP1-2.6' and 'SSP3-7.0'."
+              )
+            }
+          >
+            Scenario
+          </Button>
+
+          {/* Threshold Explanation */}
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<InfoIcon />}
+            onClick={() =>
+              handleOpenDialog(
+                "Threshold determines the sensitivity of the drought index to various conditions. This value can adjust the severity levels, helping in better classification of drought conditions."
+              )
+            }
+          >
+            Threshold
+          </Button>
+
+          {/* Calculation Methods */}
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<InfoIcon />}
+            onClick={() =>
+              handleOpenDialog(
+                "Calculation Methods: Drought indices are calculated using various climate data including precipitation, temperature, and evaporation. These indices help in understanding and forecasting drought conditions."
+              )
+            }
           >
             Calculation Methods
           </Button>
-
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<InfoIcon />}
-            onClick={() => handleOpenDialog("Climate Models: Climate models simulate future drought conditions based on different emission scenarios.")}
-          >
-            Climate Models
-          </Button>
         </Box>
       </Box>
+
 
       {/* ✅ 弹出对话框 */}
       <Dialog open={openDialog} onClose={handleCloseDialog}>

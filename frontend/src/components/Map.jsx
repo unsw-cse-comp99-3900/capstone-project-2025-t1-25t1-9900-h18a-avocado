@@ -82,14 +82,21 @@ function Map({ mapData, filters }) {
         path.onclick = async (event) => {
           event.preventDefault();
           setSelectedRegion(regionId);
+
+          const normalizedFilters = {};
+          Object.keys(filters).forEach((key) => {
+            const newKey = key.replace(/\s+/g, "_");
+            normalizedFilters[newKey] = filters[key];
+          });
+
           const stats = await fetchRegionStats(filters, regionId);
           navigate(`/region/${regionId}`, {
             state: {
-              filters,
+              filters: normalizedFilters,
               stats,
             },
           });
-          console.log("state:", { state : { filters, stats } });
+          console.log("state:", { state : { filters: normalizedFilters, stats } });
         };
 
         path.onmouseover = (event) => {

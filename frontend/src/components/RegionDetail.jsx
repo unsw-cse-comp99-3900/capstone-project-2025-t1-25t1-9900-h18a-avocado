@@ -4,84 +4,130 @@ import { Chart, registerables } from 'chart.js';
 import { Box, Typography, Paper } from '@mui/material';
 import { useLocation } from 'react-router-dom';
 
+// Register Chart.js components
 Chart.register(...registerables);
 
-// 场景显示名称映射
-const SCENARIO_DISPLAY_NAMES = {
-  rcp45: 'RCP4.5',
-  rcp85: 'RCP8.5',
-  ssp126: 'SSP1-2.6',
-  ssp370: 'SSP3-7.0'
+// Mapping of model IDs to display names
+const MODEL_NAMES = {
+  model1: 'Model A',
+  model2: 'Model B', 
+  model3: 'Model C',
+  model4: 'Model D',
+  model5: 'Model E'
 };
 
-// 场景颜色配置
-const SCENARIO_COLORS = {
-  rcp45: 'rgba(75, 192, 192, 0.7)',
-  rcp85: 'rgba(255, 99, 132, 0.7)',
-  ssp126: 'rgba(54, 162, 235, 0.7)',
-  ssp370: 'rgba(255, 159, 64, 0.7)'
+// Configuration for different climate scenarios (colors and display names)
+const SCENARIO_CONFIG = {
+  rcp45: { name: 'RCP4.5', color: 'rgba(75, 192, 192, 0.7)' },
+  rcp85: { name: 'RCP8.5', color: 'rgba(255, 99, 132, 0.7)' },
+  ssp126: { name: 'SSP1-2.6', color: 'rgba(54, 162, 235, 0.7)' },
+  ssp370: { name: 'SSP3-7.0', color: 'rgba(255, 159, 64, 0.7)' }
 };
 
 const RegionDetail = () => {
+  // Get state from route location
   const { state } = useLocation();
   const { 
-    filters, 
-    futureData, 
-    baselineFreq, 
-    baselineLen 
+    filters = {}, 
+    stats = {}, 
+    region_id,
+    region_name 
   } = state || {};
 
-  // 计算基准期平均值
-  const calculateAverage = (arr) => (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(2);
-  const avgBaselineFreq = calculateAverage(baselineFreq);
-  const avgBaselineLen = calculateAverage(baselineLen);
-
-  // 生成时间标签
-  const generateBaselineLabels = () => ['1976-1985', '1986-1995', '1996-2005'];
-  const generateFutureLabels = () => {
-    const [startYear] = filters['Time Frames'].split('-').map(Number);
-    return [
-      `${startYear}-${startYear+9}`,
-      `${startYear+10}-${startYear+19}`,
-      `${startYear+20}-${startYear+29}`
-    ];
-  };
-
-  // 获取未来数据集
-  const getFutureDatasets = () => {
-    if (!futureData) return [];
-    const scenarios = Object.keys(futureData);
-    const isFrequency = filters.Definition === 'Change in Number';
+  // Process model data to extract available models and scenarios
+  const processModelData = () => {
+    if (!stats.baselineData || !stats.futureData) return { models: [], scenarios: [] };
     
-    return scenarios.map(scenario => ({
-      label: SCENARIO_DISPLAY_NAMES[scenario] || scenario,
-      data: isFrequency ? futureData[scenario].freq : futureData[scenario].len,
-      backgroundColor: SCENARIO_COLORS[scenario] || 'rgba(153, 102, 255, 0.7)'
-    }));
+    // Get all model names from the first scenario in baselineData
+    const firstScenario = Object.keys(stats.baselineData)[0];
+    const models = Object.keys(stats.baselineData[firstScenario] || {});
+    
+    // Get all available scenarios
+    const scenarios = Object.keys(stats.futureData);
+    
+    return { models, scenarios };
   };
 
-  // 图表配置
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { position: 'top' },
-      tooltip: { mode: 'index', intersect: false }
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        title: {
-          display: true,
-          text: filters.Definition.includes('Length') ? 'Days' : 'Count'
-        }
+  // Calculate percentage change between baseline and future data
+  const calculatePercentageChange = (baseline, future) => {
+    if (!baseline || baseline.length === 0) return 0;
+    const baseAvg = baseline.reduce((a, b) => a + b, 0) / baseline.length;
+    const futureAvg = future.reduce((a, b) => a + b, 0) / future.length;
+    return ((futureAvg - baseAvg) / baseAvg * 100).toFixed(1);
+  };
+
+  // Generate chart data based on type (percentage or absolute values)
+  const generateChartData = (type) => {
+    const { models, scenarios } = processModelData();
+    const isPercentage = type === 'percentage';
+    const isEvents = filters.Definition === 'Change in Number';
+    
+    return {
+      labels: models.map(model => MODEL_NAMES[model] || model),
+      datasets: scenarios.map(scenario => {
+        const config = SCENARIO_CONFIG[scenario] || { 
+          name: scenario, 
+          color: `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 0.7)` 
+        };
+        
+        return {
+          label: config.name,
+          backgroundColor: config.color,
+          data: models.map(model => {
+            const baseline = stats.baselineData[scenarios[0]]?.[model]?.drought_events || [];
+            const future = stats.futureData[scenario]?.[model]?.drought_events || [];
+            
+            return isPercentage 
+              ? calculatePercentageChange(baseline, future)
+              : future.length; // For absolute values, use the count directly
+          })
+        };
+      })
+    };
+  };
+
+  // Calculate dynamic axis range based on data values
+  const calculateAxisRange = (data, isPercentage = false) => {
+    const allValues = data.datasets.flatMap(d => d.data);
+    const max = Math.max(...allValues);
+    const min = Math.min(...allValues);
+    
+    return {
+      min: isPercentage ? Math.floor(min / 10) * 10 : 0, // Round down to nearest 10 for percentages
+      max: isPercentage ? Math.ceil(max / 10) * 10 : Math.ceil(max / 10) * 10 // Round up to nearest 10
+    };
+  };
+
+  // Generate chart options configuration
+  const getChartOptions = (isPercentage) => {
+    const data = generateChartData(isPercentage ? 'percentage' : 'absolute');
+    const { min, max } = calculateAxisRange(data, isPercentage);
+    
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: { mode: 'index', intersect: false }
       },
-      x: {
-        title: { display: true, text: 'Time Period' }
+      scales: {
+        y: {
+          min,
+          max,
+          title: {
+            display: true,
+            text: isPercentage ? 'Percentage Change (%)' : 
+                  filters.Definition === 'Change in Number' ? 'Number of Events' : 'Duration (Months)'
+          }
+        },
+        x: {
+          title: { display: true, text: 'Climate Models' }
+        }
       }
-    }
+    };
   };
 
+  // Handle missing state
   if (!state) {
     return (
       <Box sx={{ p: 3, textAlign: 'center' }}>
@@ -90,15 +136,22 @@ const RegionDetail = () => {
     );
   }
 
+  // Determine chart title based on filter definition
+  const chartTitle = filters.Definition === 'Change in Number' 
+    ? 'Projected change in number of events' 
+    : 'Projected change in drought length';
+
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
+      {/* Main title showing region name or fallback to region ID */}
       <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
-        Drought Analysis - Region {state.regionId}
+        Drought Analysis - {region_name || `Region ${region_id}`}
       </Typography>
       
+      {/* Information card showing key parameters */}
       <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
         <Typography variant="h6">
-          <strong>Index:</strong> {filters['Drought Index']}
+          <strong>Index:</strong> {filters.Drought_Index}
         </Typography>
         <Typography variant="h6">
           <strong>Source:</strong> {filters.Source}
@@ -107,83 +160,35 @@ const RegionDetail = () => {
           <strong>Baseline Period:</strong> 1976-2005
         </Typography>
         <Typography variant="h6">
-          <strong>Projection Period:</strong> {filters['Time Frames']}
+          <strong>Projection Period:</strong> {filters.Time_Frames}
         </Typography>
       </Paper>
 
-      {filters.Definition === 'Change in Number' ? (
-        <>
-          <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
-            <Typography variant="h5" gutterBottom>
-              Average number of drought months in the baseline period: {avgBaselineFreq}
-            </Typography>
-            <Box sx={{ height: 400 }}>
-              <Bar
-                data={{
-                  labels: generateBaselineLabels(),
-                  datasets: [{
-                    label: 'Historical Frequency',
-                    data: baselineFreq,
-                    backgroundColor: 'rgba(54, 162, 235, 0.7)'
-                  }]
-                }}
-                options={chartOptions}
-              />
-            </Box>
-          </Paper>
+      {/* Percentage change chart */}
+      <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
+        <Typography variant="h5" gutterBottom>
+          {chartTitle} (%)
+        </Typography>
+        <Box sx={{ height: 500 }}>
+          <Bar
+            data={generateChartData('percentage')}
+            options={getChartOptions(true)}
+          />
+        </Box>
+      </Paper>
 
-          <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
-            <Typography variant="h5" gutterBottom>
-              Projected change in drought events
-            </Typography>
-            <Box sx={{ height: 400 }}>
-              <Bar
-                data={{
-                  labels: generateFutureLabels(),
-                  datasets: getFutureDatasets()
-                }}
-                options={chartOptions}
-              />
-            </Box>
-          </Paper>
-        </>
-      ) : (
-        <>
-          <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
-            <Typography variant="h5" gutterBottom>
-              Average drought length in the baseline period: {avgBaselineLen}
-            </Typography>
-            <Box sx={{ height: 400 }}>
-              <Bar
-                data={{
-                  labels: generateBaselineLabels(),
-                  datasets: [{
-                    label: 'Historical Duration',
-                    data: baselineLen,
-                    backgroundColor: 'rgba(255, 159, 64, 0.7)'
-                  }]
-                }}
-                options={chartOptions}
-              />
-            </Box>
-          </Paper>
-
-          <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
-            <Typography variant="h5" gutterBottom>
-              Projected change in drought length
-            </Typography>
-            <Box sx={{ height: 400 }}>
-              <Bar
-                data={{
-                  labels: generateFutureLabels(),
-                  datasets: getFutureDatasets()
-                }}
-                options={chartOptions}
-              />
-            </Box>
-          </Paper>
-        </>
-      )}
+      {/* Absolute values chart */}
+      <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
+        <Typography variant="h5" gutterBottom>
+          {chartTitle} ({filters.Definition === 'Change in Number' ? 'number' : 'month'})
+        </Typography>
+        <Box sx={{ height: 500 }}>
+          <Bar
+            data={generateChartData('absolute')}
+            options={getChartOptions(false)}
+          />
+        </Box>
+      </Paper>
     </Box>
   );
 };
