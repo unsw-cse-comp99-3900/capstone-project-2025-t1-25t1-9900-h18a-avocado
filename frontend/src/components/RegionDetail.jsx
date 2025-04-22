@@ -48,6 +48,11 @@ const RegionDetail = () => {
     return ((futureNum / baselineNum - 1) * 100).toFixed(1);
   };
 
+  // Calculate absolute difference (future - baseline)
+  const calculateAbsoluteDifference = (baselineNum, futureNum) => {
+    return futureNum - baselineNum;
+  };
+
   // Get the appropriate data value based on Definition
   const getDataValue = (dataObj, isEvents) => {
     return isEvents 
@@ -78,29 +83,34 @@ const RegionDetail = () => {
             
             return isPercentage 
               ? calculatePercentageChange(baselineValue, futureValue)
-              : futureValue;
+              : calculateAbsoluteDifference(baselineValue, futureValue);
           })
         };
       })
     };
   };
 
-  // Calculate axis range
-  const calculateAxisRange = (data, isPercentage = false) => {
+  // Calculate axis range with proper rounding for negative values
+  const calculateAxisRange = (data) => {
     const allValues = data.datasets.flatMap(d => d.data);
     const max = Math.max(...allValues);
     const min = Math.min(...allValues);
     
+    // Round to nearest 10, handling negative values properly
+    const roundToNearest10 = (num) => {
+      return Math.sign(num) * Math.ceil(Math.abs(num) / 10) * 10;
+    };
+    
     return {
-      min: isPercentage ? Math.floor(min / 10) * 10 : 0,
-      max: isPercentage ? Math.ceil(max / 10) * 10 : Math.ceil(max / 10) * 10
+      min: min < 0 ? roundToNearest10(min) : 0,
+      max: roundToNearest10(max)
     };
   };
 
   // Generate chart options
   const getChartOptions = (isPercentage) => {
     const data = generateChartData(isPercentage ? 'percentage' : 'absolute');
-    const { min, max } = calculateAxisRange(data, isPercentage);
+    const { min, max } = calculateAxisRange(data);
     
     return {
       responsive: true,
@@ -116,7 +126,7 @@ const RegionDetail = () => {
           title: {
             display: true,
             text: isPercentage ? 'Percentage Change (%)' : 
-                  filters.Definition === 'Change in Number' ? 'Number of Events' : 'Duration (Months)'
+                  filters.Definition === 'Change in Number' ? 'Change in Number of Events' : 'Change in Duration (Months)'
           }
         },
         x: {
@@ -172,10 +182,10 @@ const RegionDetail = () => {
         </Box>
       </Paper>
 
-      {/* Absolute values chart */}
+      {/* Absolute difference chart (future - baseline) */}
       <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
         <Typography variant="h5" gutterBottom>
-          {chartTitle} ({filters.Definition === 'Change in Number' ? 'number' : 'month'})
+          {chartTitle} (Difference)
         </Typography>
         <Box sx={{ height: 500 }}>
           <Bar
