@@ -4,10 +4,8 @@ import { Chart, registerables } from 'chart.js';
 import { Box, Typography, Paper } from '@mui/material';
 import { useLocation } from 'react-router-dom';
 
-// Register Chart.js components
 Chart.register(...registerables);
 
-// Mapping of model IDs to display names
 const MODEL_NAMES = {
   model1: 'Model A',
   model2: 'Model B', 
@@ -16,7 +14,6 @@ const MODEL_NAMES = {
   model5: 'Model E'
 };
 
-// Configuration for different climate scenarios (colors and display names)
 const SCENARIO_CONFIG = {
   rcp45: { name: 'RCP4.5', color: 'rgba(75, 192, 192, 0.7)' },
   rcp85: { name: 'RCP8.5', color: 'rgba(255, 99, 132, 0.7)' },
@@ -25,38 +22,45 @@ const SCENARIO_CONFIG = {
 };
 
 const RegionDetail = () => {
-  // Get state from route location
   const { state } = useLocation();
   const { 
     filters = {}, 
-    stats = {}, 
-    region_id,
-    region_name 
+    stats = {} 
   } = state || {};
 
-  // Process model data to extract available models and scenarios
+  // Get region info and data from stats
+  const { region_id, region_name, baselineData, futureData } = stats;
+
+  // Process model data
   const processModelData = () => {
-    if (!stats.baselineData || !stats.futureData) return { models: [], scenarios: [] };
+    if (!baselineData || !futureData) return { models: [], scenarios: [] };
     
-    // Get all model names from the first scenario in baselineData
-    const firstScenario = Object.keys(stats.baselineData)[0];
-    const models = Object.keys(stats.baselineData[firstScenario] || {});
-    
-    // Get all available scenarios
-    const scenarios = Object.keys(stats.futureData);
+    const scenarios = Object.keys(futureData);
+    const firstScenario = scenarios[0];
+    const models = Object.keys(baselineData[firstScenario] || {});
     
     return { models, scenarios };
   };
 
-  // Calculate percentage change between baseline and future data
-  const calculatePercentageChange = (baseline, future) => {
-    if (!baseline || baseline.length === 0) return 0;
-    const baseAvg = baseline.reduce((a, b) => a + b, 0) / baseline.length;
-    const futureAvg = future.reduce((a, b) => a + b, 0) / future.length;
-    return ((futureAvg - baseAvg) / baseAvg * 100).toFixed(1);
+  // Calculate percentage change (future number / baseline number - 1) * 100
+  const calculatePercentageChange = (baselineNum, futureNum) => {
+    if (!baselineNum || baselineNum === 0) return 0;
+    return ((futureNum / baselineNum - 1) * 100).toFixed(1);
   };
 
-  // Generate chart data based on type (percentage or absolute values)
+  // Calculate absolute difference (future - baseline)
+  const calculateAbsoluteDifference = (baselineNum, futureNum) => {
+    return futureNum - baselineNum;
+  };
+
+  // Get the appropriate data value based on Definition
+  const getDataValue = (dataObj, isEvents) => {
+    return isEvents 
+      ? dataObj?.drought_events?.length || 0
+      : dataObj?.drought_months_details?.length || 0;
+  };
+
+  // Generate chart data
   const generateChartData = (type) => {
     const { models, scenarios } = processModelData();
     const isPercentage = type === 'percentage';
@@ -74,34 +78,39 @@ const RegionDetail = () => {
           label: config.name,
           backgroundColor: config.color,
           data: models.map(model => {
-            const baseline = stats.baselineData[scenarios[0]]?.[model]?.drought_events || [];
-            const future = stats.futureData[scenario]?.[model]?.drought_events || [];
+            const baselineValue = getDataValue(baselineData[scenario]?.[model], isEvents);
+            const futureValue = getDataValue(futureData[scenario]?.[model], isEvents);
             
             return isPercentage 
-              ? calculatePercentageChange(baseline, future)
-              : future.length; // For absolute values, use the count directly
+              ? calculatePercentageChange(baselineValue, futureValue)
+              : calculateAbsoluteDifference(baselineValue, futureValue);
           })
         };
       })
     };
   };
 
-  // Calculate dynamic axis range based on data values
-  const calculateAxisRange = (data, isPercentage = false) => {
+  // Calculate axis range with proper rounding for negative values
+  const calculateAxisRange = (data) => {
     const allValues = data.datasets.flatMap(d => d.data);
     const max = Math.max(...allValues);
     const min = Math.min(...allValues);
     
+    // Round to nearest 10, handling negative values properly
+    const roundToNearest10 = (num) => {
+      return Math.sign(num) * Math.ceil(Math.abs(num) / 10) * 10;
+    };
+    
     return {
-      min: isPercentage ? Math.floor(min / 10) * 10 : 0, // Round down to nearest 10 for percentages
-      max: isPercentage ? Math.ceil(max / 10) * 10 : Math.ceil(max / 10) * 10 // Round up to nearest 10
+      min: min < 0 ? roundToNearest10(min) : 0,
+      max: roundToNearest10(max)
     };
   };
 
-  // Generate chart options configuration
+  // Generate chart options
   const getChartOptions = (isPercentage) => {
     const data = generateChartData(isPercentage ? 'percentage' : 'absolute');
-    const { min, max } = calculateAxisRange(data, isPercentage);
+    const { min, max } = calculateAxisRange(data);
     
     return {
       responsive: true,
@@ -117,7 +126,7 @@ const RegionDetail = () => {
           title: {
             display: true,
             text: isPercentage ? 'Percentage Change (%)' : 
-                  filters.Definition === 'Change in Number' ? 'Number of Events' : 'Duration (Months)'
+                  filters.Definition === 'Change in Number' ? 'Change in Number of Events' : 'Change in Duration (Months)'
           }
         },
         x: {
@@ -127,7 +136,6 @@ const RegionDetail = () => {
     };
   };
 
-  // Handle missing state
   if (!state) {
     return (
       <Box sx={{ p: 3, textAlign: 'center' }}>
@@ -136,19 +144,16 @@ const RegionDetail = () => {
     );
   }
 
-  // Determine chart title based on filter definition
   const chartTitle = filters.Definition === 'Change in Number' 
     ? 'Projected change in number of events' 
     : 'Projected change in drought length';
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
-      {/* Main title showing region name or fallback to region ID */}
       <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
         Drought Analysis - {region_name || `Region ${region_id}`}
       </Typography>
       
-      {/* Information card showing key parameters */}
       <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
         <Typography variant="h6">
           <strong>Index:</strong> {filters.Drought_Index}
@@ -177,10 +182,10 @@ const RegionDetail = () => {
         </Box>
       </Paper>
 
-      {/* Absolute values chart */}
+      {/* Absolute difference chart (future - baseline) */}
       <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
         <Typography variant="h5" gutterBottom>
-          {chartTitle} ({filters.Definition === 'Change in Number' ? 'number' : 'month'})
+          {chartTitle} (Difference)
         </Typography>
         <Box sx={{ height: 500 }}>
           <Bar
