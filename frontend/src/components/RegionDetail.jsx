@@ -28,7 +28,7 @@ const RegionDetail = () => {
     stats = {} 
   } = state || {};
 
-  // Get region info from stats
+  // Get region info and data from stats
   const { region_id, region_name, baselineData, futureData } = stats;
 
   // Process model data
@@ -46,6 +46,13 @@ const RegionDetail = () => {
   const calculatePercentageChange = (baselineNum, futureNum) => {
     if (!baselineNum || baselineNum === 0) return 0;
     return ((futureNum / baselineNum - 1) * 100).toFixed(1);
+  };
+
+  // Get the appropriate data value based on Definition
+  const getDataValue = (dataObj, isEvents) => {
+    return isEvents 
+      ? dataObj?.drought_events?.length || 0
+      : dataObj?.drought_months_details?.length || 0;
   };
 
   // Generate chart data
@@ -66,13 +73,12 @@ const RegionDetail = () => {
           label: config.name,
           backgroundColor: config.color,
           data: models.map(model => {
-            // Get the array length (number) from both datasets
-            const baselineNum = baselineData[scenario]?.[model]?.drought_events?.length || 0;
-            const futureNum = futureData[scenario]?.[model]?.drought_events?.length || 0;
+            const baselineValue = getDataValue(baselineData[scenario]?.[model], isEvents);
+            const futureValue = getDataValue(futureData[scenario]?.[model], isEvents);
             
             return isPercentage 
-              ? calculatePercentageChange(baselineNum, futureNum)
-              : futureNum;
+              ? calculatePercentageChange(baselineValue, futureValue)
+              : futureValue;
           })
         };
       })
@@ -134,7 +140,6 @@ const RegionDetail = () => {
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
-      {/* Fixed region name display */}
       <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
         Drought Analysis - {region_name || `Region ${region_id}`}
       </Typography>
@@ -154,7 +159,7 @@ const RegionDetail = () => {
         </Typography>
       </Paper>
 
-      {/* Percentage change chart - now correctly showing data */}
+      {/* Percentage change chart */}
       <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
         <Typography variant="h5" gutterBottom>
           {chartTitle} (%)
