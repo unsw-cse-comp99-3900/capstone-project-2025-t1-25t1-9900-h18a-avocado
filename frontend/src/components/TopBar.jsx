@@ -15,7 +15,6 @@ function TopBar() {
     "Step 8: Click a region on the map to view detailed drought statistics.",
     "Step 9: Explore the detail page to compare drought metrics across different models."
   ];
-  
 
   const handleDialogOpen = () => setOpen(true);
   const handleDialogClose = () => setOpen(false);
@@ -58,7 +57,6 @@ function TopBar() {
             </Button>
           </Box>
         </Toolbar>
-
       </AppBar>
 
       {/* 👇 弹出窗口 */}
@@ -72,6 +70,12 @@ function TopBar() {
               </Step>
             ))}
           </Stepper>
+          {/* Add Close Button */}
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+            <Button onClick={handleDialogClose} color="primary">
+              Close
+            </Button>
+          </Box>
         </DialogContent>
       </Dialog>
     </>

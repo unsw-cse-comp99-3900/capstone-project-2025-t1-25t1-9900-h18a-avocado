@@ -38,6 +38,7 @@ function SideBar({ onFetchData }) {
   const [selectedSource, setSelectedSource] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
   const [dialogContent, setDialogContent] = useState("");
+  const [dialogTitle, setDialogTitle] = useState("Explanation");
 
   const handleSelectionChange = (category, value) => {
     setSelectedFilters((prev) => ({ ...prev, [category]: value }));
@@ -47,10 +48,27 @@ function SideBar({ onFetchData }) {
   };
 
   const handleSubmit = () => {
+    // Check if all required fields are filled
+    const missingFields = [];
+    if (!selectedFilters["Definition"]) missingFields.push("definition");
+    if (!selectedFilters["Drought Index"]) missingFields.push("drought index");
+    if (!selectedFilters["Time Frames"]) missingFields.push("time frames");
+    if (!selectedFilters["Source"]) missingFields.push("source");
+    if (!selectedFilters["Scenario"]) missingFields.push("scenario");
+
+    if (missingFields.length > 0) {
+      setDialogTitle("Missing Parameters");
+      setDialogContent(`Please select the following fields: ${missingFields.join(", ")}`);
+      setOpenDialog(true);
+      return;
+    }
+
+    // If all fields are selected, proceed to fetch data
     onFetchData(selectedFilters);
   };
   
-  const handleOpenDialog = (content) => {
+  const handleOpenDialog = (content, title = "Explanation") => {
+    setDialogTitle(title);
     setDialogContent(content);
     setOpenDialog(true);
   };
@@ -127,7 +145,7 @@ function SideBar({ onFetchData }) {
         </Box>
 
         <Box sx={{ p: 2, display: "flex", justifyContent: "center" }}>
-          <Button variant="contained" color="primary" onClick={handleSubmit}>
+          <Button type="button" variant="contained" color="primary" onClick={handleSubmit}>
             Submit Filters
           </Button>
         </Box>
@@ -150,113 +168,119 @@ function SideBar({ onFetchData }) {
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mt: 2 }}>
           {/* Definition */}
           <Button
+            type="button"
             variant="outlined"
             size="small"
             startIcon={<InfoIcon />}
             onClick={() =>
               handleOpenDialog(
-                "Definition allows you to select the type of drought change you are analyzing. Options include 'Change in Number' or 'Change in Length', helping determine the method of analysis for drought severity."
+                "DEFINITION allows you to select the type of drought change you are analyzing. Options include 'Change in Number' or 'Change in Length', helping determine the method of analysis for drought severity."
               )
             }
           >
-            Definition
+            DEFINITION
           </Button>
 
           {/* Drought Index Explanation */}
           <Button
+            type="button"
             variant="outlined"
             size="small"
             startIcon={<InfoIcon />}
             onClick={() =>
               handleOpenDialog(
-                "Drought Index: SPI (Standard Precipitation Index) is based on precipitation and provides insights into precipitation anomalies over various time scales. SPEI (Standardized Precipitation Evapotranspiration Index) incorporates temperature and precipitation, providing a more comprehensive measure of drought severity."
+                "DROUGHT INDEX: SPI (Standard Precipitation Index) is based on precipitation and provides insights into precipitation anomalies over various time scales. SPEI (Standardized Precipitation Evapotranspiration Index) incorporates temperature and precipitation, providing a more comprehensive measure of drought severity."
               )
             }
           >
-            Drought Index
+            DROUGHT INDEX
           </Button>
 
           {/* Time Frames Explanation */}
           <Button
             variant="outlined"
+            type="button"
             size="small"
             startIcon={<InfoIcon />}
             onClick={() =>
               handleOpenDialog(
-                "Time Frames allows you to define the period over which the drought analysis will be conducted. It helps select the projection periods to observe future trends and comparisons."
+                "TIME FRAMES allows you to define the period over which the drought analysis will be conducted. It helps select the projection periods to observe future trends and comparisons."
               )
             }
           >
-            Time Frames
+            TIME FRAMES
           </Button>
 
           {/* Source Explanation */}
           <Button
             variant="outlined"
+            type="button"
             size="small"
             startIcon={<InfoIcon />}
             onClick={() =>
               handleOpenDialog(
-                "Source refers to the selection of climate models. For CMIP5, the models include 'CCCma-CanESM2', 'NCC-NorESM1-M', 'CSIRO-BOM-ACCESS1-0', 'MIROC-MIROC5', 'NOAA-GFDL-GFDL-ESM2M'. For CMIP6, the models include 'ACCESS-CM2', 'ACCESS-ESM1-5', 'CESM2', 'CNRM-ESM2-1', 'CMCC-ESM2'."
+                "SOURCE refers to the selection of climate models. For CMIP5, the models include 'CCCma-CanESM2', 'NCC-NorESM1-M', 'CSIRO-BOM-ACCESS1-0', 'MIROC-MIROC5', 'NOAA-GFDL-GFDL-ESM2M'. For CMIP6, the models include 'ACCESS-CM2', 'ACCESS-ESM1-5', 'CESM2', 'CNRM-ESM2-1', 'CMCC-ESM2'."
               )
             }
           >
-            Source
+            SOURCE
           </Button>
 
           {/* Scenario Explanation */}
           <Button
             variant="outlined"
+            type="button"
             size="small"
             startIcon={<InfoIcon />}
             onClick={() =>
               handleOpenDialog(
-                "Scenario refers to the specific emissions or environmental pathways that model future climate projections. For CMIP5, available scenarios are 'RCP4.5' and 'RCP8.5'. For CMIP6, available scenarios are 'SSP1-2.6' and 'SSP3-7.0'."
+                "SCENARIO refers to the specific emissions or environmental pathways that model future climate projections. For CMIP5, available scenarios are 'RCP4.5' and 'RCP8.5'. For CMIP6, available scenarios are 'SSP1-2.6' and 'SSP3-7.0'."
               )
             }
           >
-            Scenario
+            SCENARIO
           </Button>
 
           {/* Threshold Explanation */}
           <Button
             variant="outlined"
+            type="button"
             size="small"
             startIcon={<InfoIcon />}
             onClick={() =>
               handleOpenDialog(
-                "Threshold determines the sensitivity of the drought index to various conditions. This value can adjust the severity levels, helping in better classification of drought conditions."
+                "THRESHOLD determines the sensitivity of the drought index to various conditions. This value can adjust the severity levels, helping in better classification of drought conditions."
               )
             }
           >
-            Threshold
+            THRESHOLD
           </Button>
 
           {/* Calculation Methods */}
           <Button
             variant="outlined"
+            type="button"
             size="small"
             startIcon={<InfoIcon />}
             onClick={() =>
               handleOpenDialog(
-                "Calculation Methods: Drought indices are calculated using various climate data including precipitation, temperature, and evaporation. These indices help in understanding and forecasting drought conditions."
+                "CALCULATION METHODS: Drought indices are calculated using various climate data including precipitation, temperature, and evaporation. These indices help in understanding and forecasting drought conditions."
               )
             }
           >
-            Calculation Methods
+            CALCULATION METHODS
           </Button>
         </Box>
       </Box>
 
-
       {/* ✅ 弹出对话框 */}
       <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>Explanation</DialogTitle>
+        <DialogTitle>{dialogTitle}</DialogTitle>
         <DialogContent>
           <Typography variant="body1">{dialogContent}</Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog} color="primary">
+          <Button type="button" onClick={handleCloseDialog} color="primary">
             Close
           </Button>
         </DialogActions>

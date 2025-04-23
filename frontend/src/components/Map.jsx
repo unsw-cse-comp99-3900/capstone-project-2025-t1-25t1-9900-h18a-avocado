@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import regionApi from "../api/regionApi";
 import svgContent from "../data/svgMap";
 import { fetchRegionStats } from "../api/dataStats";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+} from "@mui/material";
 
 const bounds = [
   [-6, 110], // 西南角
@@ -24,6 +30,15 @@ function Map({ mapData, filters }) {
   const [selectedRegion, setSelectedRegion] = useState(null);
   const [droughtData, setDroughtData] = useState(null);
   const [regionColors, setRegionColors] = useState({});
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
+
+  useEffect(() => {
+    // 判断 filters 是否有效（即用户是否点击了 Submit Filters）
+    if (filters && Object.keys(filters).length > 0) {
+      setIsSubmitted(true);
+    }
+  }, [filters]);
 
   useEffect(() => {
     if (mapData && Array.isArray(mapData.received_data)) {
@@ -81,6 +96,12 @@ function Map({ mapData, filters }) {
 
         path.onclick = async (event) => {
           event.preventDefault();
+
+          if (!isSubmitted) {
+            setOpenDialog(true);
+            return;
+          }
+
           setSelectedRegion(regionId);
 
           const normalizedFilters = {};
@@ -146,6 +167,15 @@ function Map({ mapData, filters }) {
           )}
         </div>
       )}
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+        <DialogTitle>Please submit parameters</DialogTitle>
+        <DialogContent>
+          <p>Please select all parameters in the function on the left side and click "Submit Filters". Only after the map is rendered can you click certain region to view the details.</p>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDialog(false)} color="primary">CLOSE</Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }
