@@ -256,20 +256,6 @@ function SideBar({ onFetchData }) {
             THRESHOLD
           </Button>
 
-          {/* Calculation Methods */}
-          <Button
-            variant="outlined"
-            type="button"
-            size="small"
-            startIcon={<InfoIcon />}
-            onClick={() =>
-              handleOpenDialog(
-                "CALCULATION METHODS: Drought indices are calculated using various climate data including precipitation, temperature, and evaporation. These indices help in understanding and forecasting drought conditions."
-              )
-            }
-          >
-            CALCULATION METHODS
-          </Button>
         </Box>
       </Box>
 
