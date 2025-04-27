@@ -1,20 +1,4 @@
 import mapApi from "./mapApi";
-import regions from "../data/regions";
-
-// CMIP5 和 CMIP6 的模型
-const CMIP5_MODELS = [
-  'CCCma-CanESM2', 'NCC-NorESM1-M', 'CSIRO-BOM-ACCESS1-0', 
-  'MIROC-MIROC5', 'NOAA-GFDL-GFDL-ESM2M'
-];
-
-const CMIP6_MODELS = [
-  'ACCESS-CM2', 'ACCESS-ESM1-5', 'CESM2', 'CNRM-ESM2-1', 'CMCC-ESM2'
-];
-
-// 根据 Source 选择模型
-const getModels = (source) => {
-  return source === 'CMIP5' ? CMIP5_MODELS : CMIP6_MODELS;
-};
 
 export const calculateRegionDiffs = async (filters) => {
   console.log("filters:", filters);
@@ -33,68 +17,36 @@ export const calculateRegionDiffs = async (filters) => {
   
   console.log("baseParams:", baseParams);
 
-  let endpoint = "drought-event-count";
+  let endpoint = "drought-event-summary";
   if (filters["Definition"] === "Change in Length") {
-    endpoint = "drought-month-count";
+    endpoint = "drought-months-summary";
   }
   console.log("endpoint:", endpoint);
 
-  // 获取对应的模型
-  const models = getModels(filters["Source"]);
+  const baselinePayload = {
+    ...baseParams,
+    start_year: 1976,
+    end_year: 2005,
+  };
 
-  const regionDiffs = await Promise.all(
-    regions.map(async ({ region_id }) => {
-      const baselineDataAllModels = [];
-      const futureDataAllModels = [];
+  const futurePayload = {
+    ...baseParams,
+    start_year: futureStart,
+    end_year: futureEnd,
+  };
 
-      // 为每个模型获取数据
-      for (const model of models) {
-        const baselinePayload = {
-          ...baseParams,
-          region_id,
-          model,  // 使用不同的模型
-          start_year: 1976,
-          end_year: 2005,
-        };
+  const [baselineData, futureData] = await Promise.all([
+    mapApi.fetchMapData(baselinePayload, endpoint),
+    mapApi.fetchMapData(futurePayload, endpoint),
+  ]);
+  console.log("baselineData:", baselineData);
+  console.log("futureData:", futureData);
 
-        const futurePayload = {
-          ...baseParams,
-          region_id,
-          model,  // 使用不同的模型
-          start_year: futureStart,
-          end_year: futureEnd,
-        };
+  const diffs = baselineData.drought_summary.map((data, index) => {
+    const futureValue = futureData.drought_summary[index];
+    return futureValue - data;
+  });
 
-        const [baselineData, futureData] = await Promise.all([
-          mapApi.fetchMapData(baselinePayload, endpoint),
-          mapApi.fetchMapData(futurePayload, endpoint),
-        ]);
-
-        // 根据Definition字段选择不同的数据字段
-        let baselineValue = 0;
-        let futureValue = 0;
-        
-        if (filters["Definition"] === "Change in Number") {
-          baselineValue = baselineData.drought_events.length; // 对应Change in Number
-          futureValue = futureData.drought_events.length;
-        } else if (filters["Definition"] === "Change in Length") {
-          baselineValue = baselineData.drought_month_count; // 对应Change in Length
-          futureValue = futureData.drought_month_count;
-        }
-
-        baselineDataAllModels.push(baselineValue);
-        futureDataAllModels.push(futureValue);
-      }
-
-      // 计算所有模型的平均值
-      const avgBaseline = baselineDataAllModels.reduce((acc, val) => acc + val, 0) / models.length;
-      const avgFuture = futureDataAllModels.reduce((acc, val) => acc + val, 0) / models.length;
-
-      const diff = avgFuture - avgBaseline;
-      return diff;
-    })
-  );
-
-  console.log("regionDiffs:", regionDiffs);
-  return regionDiffs;
+  console.log("diffs:", diffs);
+  return diffs;
 };

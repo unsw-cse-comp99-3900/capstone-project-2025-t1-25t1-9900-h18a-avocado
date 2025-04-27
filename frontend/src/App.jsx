@@ -11,16 +11,20 @@ import Legend from './components/Legend';
 
 function App() {
   const [mapData, setMapData] = useState(null);
-  const [filters, setFilters] = useState(null); // ✅ 新增 state 用于存 filters
+  const [filters, setFilters] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const handleFetchMapData = async (filters) => {
     console.log("filters:", filters);
+    setLoading(true);
     try {
       setFilters(filters); // ✅ 保存 filters
       const regionDiffs = await calculateRegionDiffs(filters);
       setMapData({ received_data: regionDiffs });
     } catch (error) {
       console.error("Error fetching map data:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -34,7 +38,7 @@ function App() {
               <TopBar />
               <Legend />
               <Box display="flex" flexGrow={1}>
-                <SideBar onFetchData={handleFetchMapData} />
+                <SideBar onFetchData={handleFetchMapData} loading={loading} />
                 <Box flexGrow={1}>
                   <Map mapData={mapData} filters={filters} /> {/* ✅ 传 filters */}
                 </Box>

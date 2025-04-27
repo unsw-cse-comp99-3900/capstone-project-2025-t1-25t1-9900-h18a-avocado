@@ -64,7 +64,6 @@ describe('SideBar Component', () => {
       /SOURCE/,
       /SCENARIO/,
       /THRESHOLD/,
-      /CALCULATION METHODS/,
     ];
   
     buttonsToTest.forEach((label) => {

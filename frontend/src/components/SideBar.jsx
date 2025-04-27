@@ -33,7 +33,7 @@ const menuItems = [
   { text: "Scenario", icon: <LayersIcon />, dropdown: true },
 ];
 
-function SideBar({ onFetchData }) {
+function SideBar({ onFetchData, loading }) {
   const [selectedFilters, setSelectedFilters] = useState({});
   const [selectedSource, setSelectedSource] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
@@ -123,7 +123,6 @@ function SideBar({ onFetchData }) {
             size="small"
             fullWidth
             placeholder="-1"
-            inputProps={{ step: 0.1 }}
             onChange={(e) => handleSelectionChange("Threshold", e.target.value)}
             sx={{
               '& .MuiOutlinedInput-root': {
@@ -145,8 +144,8 @@ function SideBar({ onFetchData }) {
         </Box>
 
         <Box sx={{ p: 2, display: "flex", justifyContent: "center" }}>
-          <Button type="button" variant="contained" color="primary" onClick={handleSubmit}>
-            Submit Filters
+          <Button type="button" variant="contained" color="primary" onClick={handleSubmit} disabled={loading}>
+          {loading ? 'Loading...' : 'Submit Filters'}
           </Button>
         </Box>
       </Box>
