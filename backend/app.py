@@ -132,7 +132,7 @@ class DroughtEventSummary(Resource):
         threshold = data.get("threshold", -1.0)
 
         event_summary = db_loader.get_total_drought_events_for_regions(index, data_source, scenario, start_year, end_year, threshold)
-        return {"success": True, "drought_event_summary": event_summary}
+        return {"success": True, "drought_summary": event_summary}
 
 
 if __name__ == "__main__":

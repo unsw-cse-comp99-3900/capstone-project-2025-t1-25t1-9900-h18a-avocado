@@ -2,6 +2,7 @@ import os
 import csv
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, Float, select, func, inspect
 from sqlalchemy.orm import sessionmaker
+import json
 import sys
 from datetime import datetime
 
@@ -71,7 +72,27 @@ class DroughtDatabase:
 
         self.table_names = []
         self.base_path = os.path.dirname(os.path.abspath(__file__))
+        self.cache = {}
+        self.cache_file = "cache.json"
+        self.load_cache()
         self.Session = sessionmaker(bind=self.engine)
+
+    def load_cache(self):
+        if os.path.exists(self.cache_file):
+            try:
+                with open(self.cache_file, "r", encoding="utf-8") as f:
+                    self.cache = json.load(f)
+                print("✅ Cache loaded from file.")
+            except Exception as e:
+                print(f"⚠️ Failed to load cache: {e}")
+
+    def save_cache(self):
+        try:
+            with open(self.cache_file, "w", encoding="utf-8") as f:
+                json.dump(self.cache, f)
+            print("✅ Cache saved to file.")
+        except Exception as e:
+            print(f"⚠️ Failed to save cache: {e}")
 
     def load_csv_files(self):
         """
@@ -307,7 +328,11 @@ class DroughtDatabase:
 
     def get_total_drought_events_for_regions(self, index, data_source, scenario, start_year, end_year, threshold=-1.0):
 
-        drought_event_summary = []
+        cache_key = f"{index}_{data_source}_{scenario}_{start_year}_{end_year}_{threshold}_event"
+        if cache_key in self.cache:
+            return self.cache[cache_key]
+
+        drought_summary = []
 
         models_cmip5 = ['CCCma-CanESM2', 'NCC-NorESM1-M', 'CSIRO-BOM-ACCESS1-0', 'MIROC-MIROC5', 'NOAA-GFDL-GFDL-ESM2M']
         models_cmip6 = ['ACCESS-CM2', 'ACCESS-ESM1-5', 'CESM2', 'CNRM-ESM2-1', 'CMCC-ESM2']
@@ -355,9 +380,12 @@ class DroughtDatabase:
                 total_events += event_count
 
             # 5个模型求平均
-            drought_event_summary.append(round(total_events / 5, 2))
+            drought_summary.append(round(total_events / 5, 2))
 
-        return drought_event_summary
+        self.cache[cache_key] = drought_summary
+        self.save_cache()
+
+        return drought_summary
 
 if __name__ == "__main__":
     db_loader = DroughtDatabase()
