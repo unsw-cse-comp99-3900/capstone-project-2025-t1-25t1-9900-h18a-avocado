@@ -5,7 +5,14 @@ from sqlalchemy.orm import sessionmaker
 import sys
 from datetime import datetime
 
-
+region_ids = [
+    1030, 1040, 1060, 1100, 5040, 5050, 5060, 6010, 6020, 6030,
+    7010, 4020, 4030, 4010, 4040, 4080, 4070, 4050, 9010, 9020,
+    9030, 3150, 1010, 1020, 2010, 2020, 2030, 2080, 2090, 3010,
+    3020, 3040, 3060, 3070, 3080, 3100, 3110, 3130, 3140, 5010,
+    5020, 5030, 1050, 1070, 1080, 1090, 1110, 2040, 2050, 2060,
+    2070, 2100, 3030, 3050, 3090, 3120, 5070, 4060
+]
 class DroughtDatabase:
     def __init__(self, db_url="sqlite:///drought_system.db", csv_files=None):
         """
@@ -239,6 +246,118 @@ class DroughtDatabase:
         session.close()
         return [(row[0], row[1]) for row in results]
 
+    def get_total_drought_months_for_regions(self, index, data_source, scenario, start_year, end_year, threshold=-1.0):
+
+
+
+        # 确定要查的表名
+        table_name = f"{index.lower()}_{data_source.lower()}_{scenario.lower()}_pr"
+
+        if "cmip5" in data_source.lower():
+            model_names = ['cccma-canesm2', 'ncc-noresm1-m', 'csiro-bom-access1-0', 'miroc-miroc5',
+                           'noaa-gfdl-gfdl-esm2m']
+        else:
+            model_names = ['access-cm2', 'access-esm1-5', 'cesm2', 'cnrm-esm2-1', 'cmcc-esm2']
+
+        session = self.Session()
+        drought_counts = {rid: [] for rid in region_ids}
+
+        for model in model_names:
+            full_table_name = f"{table_name}_{model}"
+
+            try:
+                table = Table(full_table_name, self.metadata, autoload_with=self.engine)
+            except Exception as e:
+                print(f"⚠️ Warning: Failed to load table {full_table_name}: {e}")
+                continue
+
+            stmt = (
+                select(
+                    table.c.region_id,
+                    func.count().label("drought_months")
+                )
+                .where(
+                    table.c.year.between(start_year, end_year),
+                    table.c.SPI < threshold,
+                    table.c.region_id.in_(region_ids)
+                )
+                .group_by(table.c.region_id)
+            )
+
+            result = session.execute(stmt).fetchall()
+
+            for row in result:
+                region_id = row[0]
+                drought_months = row[1]
+                if region_id in drought_counts:
+                    drought_counts[region_id].append(drought_months)
+
+        session.close()
+
+        final_result = []
+        for rid in region_ids:
+            counts = drought_counts[rid]
+            if counts:
+                avg_count = sum(counts) / len(counts)
+                final_result.append(avg_count)
+            else:
+                final_result.append(0)
+
+        return final_result
+
+    def get_total_drought_events_for_regions(self, index, data_source, scenario, start_year, end_year, threshold=-1.0):
+
+        drought_event_summary = []
+
+        models_cmip5 = ['CCCma-CanESM2', 'NCC-NorESM1-M', 'CSIRO-BOM-ACCESS1-0', 'MIROC-MIROC5', 'NOAA-GFDL-GFDL-ESM2M']
+        models_cmip6 = ['ACCESS-CM2', 'ACCESS-ESM1-5', 'CESM2', 'CNRM-ESM2-1', 'CMCC-ESM2']
+
+        models = models_cmip5 if data_source.lower() == "cmip5" else models_cmip6
+
+        for region_id in region_ids:
+            total_events = 0
+            for model_name in models:
+                table_name = f"{index.lower()}_{data_source.lower()}_{scenario.lower()}_pr_{model_name.lower()}"
+                table = Table(table_name, self.metadata, autoload_with=self.engine)
+                session = self.Session()
+                stmt = select(table.c.year, table.c.month).where(
+                    table.c.year.between(start_year, end_year),
+                    table.c.region_id == region_id,
+                    table.c.SPI < threshold
+                ).order_by(table.c.year.asc(), table.c.month.asc())
+                results = session.execute(stmt).fetchall()
+                session.close()
+
+                drought_months = []
+                for row in results:
+                    y, m = row[0], row[1]
+                    month_index = y * 12 + (m - 1)
+                    drought_months.append(month_index)
+                drought_months.sort()
+
+                # 统计干旱事件（连续2个月及以上）
+                if not drought_months:
+                    continue
+
+                event_count = 0
+                current_event = [drought_months[0]]
+                for i in range(1, len(drought_months)):
+                    if drought_months[i] == drought_months[i - 1] + 1:
+                        current_event.append(drought_months[i])
+                    else:
+                        if len(current_event) >= 2:
+                            event_count += 1
+                        current_event = [drought_months[i]]
+
+                if len(current_event) >= 2:
+                    event_count += 1
+
+                total_events += event_count
+
+            # 5个模型求平均
+            drought_event_summary.append(round(total_events / 5, 2))
+
+        return drought_event_summary
 
 if __name__ == "__main__":
     db_loader = DroughtDatabase()
