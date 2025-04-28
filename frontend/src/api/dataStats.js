@@ -1,6 +1,14 @@
 import regionApi from "./regionApi";
 import regions from "../data/regions";
 
+/**
+ * Fetches drought statistics for a specific region based on the provided filters.
+ * @param {Object} filters - The filters to apply for fetching data.
+ * @param {string} regionId - The ID of the region to fetch data for.
+ * @return {Promise<Object>} - A promise that resolves to an object containing the region's drought statistics.
+ * @throws {Error} - Throws an error if the API call fails or if the region ID is invalid.
+**/
+
 // define CMIP5 and CMIP6 models
 const CMIP5_MODELS = [
   'CCCma-CanESM2', 'NCC-NorESM1-M', 'CSIRO-BOM-ACCESS1-0', 

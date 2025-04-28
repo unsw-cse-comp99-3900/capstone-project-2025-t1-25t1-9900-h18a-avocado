@@ -22,7 +22,7 @@ describe('fetchRegionStats', () => {
     const mockBaselineData = { drought_events: [{}, {}] }; // 2 events
     const mockFutureData = { drought_events: [{}, {}, {}] }; // 3 events
 
-    // CMIP5 有5个模型，每个模型 baseline 和 future
+    // there are 5 models in CMIP5, each with baseline and future data
     regionApi.fetchDroughtEvents
       .mockResolvedValueOnce(mockBaselineData)
       .mockResolvedValueOnce(mockFutureData)
@@ -41,15 +41,15 @@ describe('fetchRegionStats', () => {
     expect(result).toHaveProperty('baselineData');
     expect(result).toHaveProperty('futureData');
 
-    // baselineData 应该有两个 scenario: rcp45, rcp85
+    // baselineDate should have two scenarios: rcp45, rcp85
     expect(Object.keys(result.baselineData)).toContain('rcp45');
     expect(Object.keys(result.baselineData)).toContain('rcp85');
 
-    // 每个 scenario 下 baselineData 应该有5个模型
+    // for every scenario, there should be 5 models in baselineData
     expect(Object.keys(result.baselineData['rcp45'])).toHaveLength(5);
     expect(Object.keys(result.futureData['rcp45'])).toHaveLength(5);
 
-    // 断言regionApi调用了10次（5个模型 baseline + future）
+    // expect the regionApi.fetchDroughtEvents to be called 20 times
     expect(regionApi.fetchDroughtEvents).toHaveBeenCalledTimes(20);
   });
 

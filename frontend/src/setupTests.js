@@ -10,7 +10,7 @@ global.TextEncoder = TextEncoder;
 Object.defineProperty(global.HTMLCanvasElement.prototype, 'getContext', {
     value: (type) => {
       if (type === '2d') {
-        // 返回一个假的 2D context 对象，避免 chart.js 报错
+        // return a fake 2D context object to avoid chart.js error
         return {
           fillRect: () => {},
           clearRect: () => {},
@@ -38,7 +38,7 @@ Object.defineProperty(global.HTMLCanvasElement.prototype, 'getContext', {
           clip: () => {},
         };
       }
-      // 如果请求别的 context，比如 webgl，返回 null
+      // if other context is requested, return null
       return null;
     },
   });
