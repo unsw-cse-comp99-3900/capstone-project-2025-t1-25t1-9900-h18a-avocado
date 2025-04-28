@@ -15,10 +15,9 @@ function App() {
   const [loading, setLoading] = useState(false);
 
   const handleFetchMapData = async (filters) => {
-    console.log("filters:", filters);
     setLoading(true);
     try {
-      setFilters(filters); // ✅ 保存 filters
+      setFilters(filters);
       const regionDiffs = await calculateRegionDiffs(filters);
       setMapData({ received_data: regionDiffs });
     } catch (error) {
@@ -40,7 +39,7 @@ function App() {
               <Box display="flex" flexGrow={1}>
                 <SideBar onFetchData={handleFetchMapData} loading={loading} />
                 <Box flexGrow={1}>
-                  <Map mapData={mapData} filters={filters} /> {/* ✅ 传 filters */}
+                  <Map mapData={mapData} filters={filters} />
                 </Box>
               </Box>
             </Box>

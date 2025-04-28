@@ -59,7 +59,7 @@ function TopBar() {
         </Toolbar>
       </AppBar>
 
-      {/* 👇 弹出窗口 */}
+      {/* dialog */}
       <Dialog open={open} onClose={handleDialogClose} maxWidth="sm" fullWidth>
         <DialogTitle>How to Use the Future Drought Explorer</DialogTitle>
         <DialogContent>

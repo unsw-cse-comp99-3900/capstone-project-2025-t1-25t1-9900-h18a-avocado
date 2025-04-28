@@ -9,7 +9,7 @@ jest.mock('../../api/dataStats', () => ({
 }));
 
 const mockMapData = {
-  received_data: Array(60).fill(0).map((_, i) => (i % 3) - 1) // 循环生成 -1, 0, 1
+  received_data: Array(60).fill(0).map((_, i) => (i % 3) - 1) // create 60 elements with values -1, 0, 1 iterately
 };
 
 const renderWithRouter = (ui, options) => render(<Router>{ui}</Router>, options);
@@ -19,7 +19,7 @@ describe('Map Component', () => {
   test('shows dialog when clicking region without submitting filters', async () => {
     renderWithRouter(<Map mapData={mockMapData} filters={{}} />);
     
-    // 模拟地图加载完成后的路径点击行为
+    // stimulate a click after the map is loaded
     await waitFor(() => {
       const paths = document.querySelectorAll('path');
       expect(paths.length).toBeGreaterThan(0);
@@ -52,7 +52,7 @@ describe('Map Component', () => {
     const path = document.querySelector('path');
     fireEvent.click(path);
 
-    // 由于跳转和状态传递是 useNavigate 控制的，此处验证 fetchRegionStats 是否被调用即可
+    // because the navigation and state passing is controlled by useNavigate, we can just check if fetchRegionStats is called
     await waitFor(() => {
       expect(dataStats.fetchRegionStats).toHaveBeenCalled();
     });

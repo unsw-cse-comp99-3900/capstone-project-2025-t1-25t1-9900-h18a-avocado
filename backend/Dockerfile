@@ -1,17 +1,17 @@
-# 使用官方 Python 镜像
+# User: python:3.10-slim
 FROM python:3.10-slim
 
-# 设置工作目录
+# set working directory
 WORKDIR /app
 
-# 复制 backend 所有内容进容器
+# copy all files from backend to /app in the container
 COPY . .
 
-# 安装依赖（你需要有 requirements.txt 文件）
+# install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 暴露端口（你程序监听的是 9901）
+# expose port 9901
 EXPOSE 9901
 
-# 启动 Flask 应用
+# start Flask app
 CMD ["python", "app.py"]

@@ -16,16 +16,16 @@ const Legend = () => {
       }}
     >
       <Typography variant="h6" sx={{ fontWeight: 'bold' }}>Drought Change</Typography>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+      <Box data-testid="positive-box" sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
         <Box role="presentation" sx={{ width: 20, height: 20, backgroundColor: 'green', mr: 1 }} />
         <Typography variant="body2">Positive Change</Typography>
       </Box>
       <Box role="presentation" sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-        <Box sx={{ width: 20, height: 20, backgroundColor: 'red', mr: 1 }} />
+        <Box data-testid="negative-box" sx={{ width: 20, height: 20, backgroundColor: 'red', mr: 1 }} />
         <Typography variant="body2">Negative Change</Typography>
       </Box>
       <Box role="presentation" sx={{ display: 'flex', alignItems: 'center' }}>
-        <Box sx={{ width: 20, height: 20, backgroundColor: 'gray', mr: 1 }} />
+        <Box data-testid="neutral-box" sx={{ width: 20, height: 20, backgroundColor: 'gray', mr: 1 }} />
         <Typography variant="body2">No Change</Typography>
       </Box>
     </Box>

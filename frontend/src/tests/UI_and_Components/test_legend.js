@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import Legend from '../../components/Legend'; // 调整路径确保对
+import Legend from '../../components/Legend';
 
 describe('Legend Component', () => {
   test('renders title correctly', () => {
@@ -19,7 +19,7 @@ describe('Legend Component', () => {
   test('renders three color boxes', () => {
     render(<Legend />);
     
-    // 查询所有绿色小方块，利用 role="presentation"或者直接查 div
+    // query all the green boxes, using role="presentation" or directly querying div
     const colorBoxes = screen.getAllByRole('presentation');
     expect(colorBoxes.length).toBe(3);
   });

@@ -1,7 +1,7 @@
 import regionApi from "./regionApi";
 import regions from "../data/regions";
 
-// 定义CMIP5和CMIP6的模型
+// define CMIP5 and CMIP6 models
 const CMIP5_MODELS = [
   'CCCma-CanESM2', 'NCC-NorESM1-M', 'CSIRO-BOM-ACCESS1-0', 
   'MIROC-MIROC5', 'NOAA-GFDL-GFDL-ESM2M'
@@ -11,7 +11,7 @@ const CMIP6_MODELS = [
   'ACCESS-CM2', 'ACCESS-ESM1-5', 'CESM2', 'CNRM-ESM2-1', 'CMCC-ESM2'
 ];
 
-// 获取模型的函数
+// function for gaining the model
 const getModels = (source) => {
   return source === 'CMIP5' ? CMIP5_MODELS : CMIP6_MODELS;
 };
@@ -22,7 +22,7 @@ const getRegionName = (regionId) => {
   return region ? region.region_name : "Unknown Region";
 };
 
-// 获取原始数据：返回所有模型的baseline和future数据
+// gain the original data: return the baseline and future data of all models
 export const fetchRegionStats = async (filters, regionId) => {
   const [futureStart, futureEnd] = filters["Time Frames"]
     ? filters["Time Frames"].split("-").map((y) => parseInt(y.trim()))
@@ -36,25 +36,25 @@ export const fetchRegionStats = async (filters, regionId) => {
 
   const models = getModels(filters["Source"]);
 
-  // 用模型的名称作为数据的 key
+  // use the model name as the key of data
   const baselineDataByScenario = {};
   const futureDataByScenario = {};
 
-  // 遍历 scenario
+  // iterate over scenarios
   const scenarios = filters["Source"] === "CMIP5" ? ["rcp45", "rcp85"] : ["ssp126", "ssp370"];
 
   for (const scenario of scenarios) {
-    // 对每个 scenario 创建 payload
+    // create payload for each scenario
     const baselineDataByModel = {};
     const futureDataByModel = {};
 
-    // 为每个模型获取原始数据
+    // gain the original data of each model
     for (const model of models) {
       const baselinePayload = {
         ...baseParams,
         region_id: regionId,
-        model,  // 添加模型
-        scenario, // 添加 scenario
+        model,
+        scenario,
         start_year: 1976,
         end_year: 2005,
       };
@@ -62,13 +62,13 @@ export const fetchRegionStats = async (filters, regionId) => {
       const futurePayload = {
         ...baseParams,
         region_id: regionId,
-        model,  // 添加模型
-        scenario, // 添加 scenario
+        model,
+        scenario,
         start_year: futureStart,
         end_year: futureEnd,
       };
 
-      // 根据 Definition 来决定调用哪个 API
+      // decide which API to call based on Definition
       const fetchDroughtData = filters["Definition"] === "Change in Number"
         ? regionApi.fetchDroughtEvents
         : regionApi.fetchDroughtMonths;
@@ -78,18 +78,18 @@ export const fetchRegionStats = async (filters, regionId) => {
         fetchDroughtData(futurePayload),
       ]);
 
-      // 使用模型名称作为键来存储数据
+      // use model name as key to store data
       baselineDataByModel[model] = baselineData;
       futureDataByModel[model] = futureData;
     }
-    // 使用 scenario 作为键来存储该 scenario 下的所有模型数据
+    // use scenario as key to store all models data under this scenario
     baselineDataByScenario[scenario] = baselineDataByModel;
     futureDataByScenario[scenario] = futureDataByModel;
   }
-  // 获取区域名称
+  // gain the region name from regions.js
   const regionName = getRegionName(regionId);
 
-  // 返回该区域的 baseline 和 future 数据，使用模型名称作为键
+  // return the data of the baseline and future data of this region, using the model name as the key
   return {
     region_id: regionId,
     region_name: regionName,

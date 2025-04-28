@@ -14,8 +14,8 @@ import {
 } from "@mui/material";
 
 const bounds = [
-  [-6, 110], // 西南角
-  [-45, 150], // 东北角
+  [-6, 110], // southwest corner
+  [-45, 150], // northeast corner
 ];
 const regionColors = {
   1: "red",
@@ -34,7 +34,7 @@ function Map({ mapData, filters }) {
   const [openDialog, setOpenDialog] = useState(false);
 
   useEffect(() => {
-    // 判断 filters 是否有效（即用户是否点击了 Submit Filters）
+    // judge if filters is empty or not (user click submit filters or not)
     if (filters && Object.keys(filters).length > 0) {
       setIsSubmitted(true);
     }
@@ -117,7 +117,6 @@ function Map({ mapData, filters }) {
               stats,
             },
           });
-          console.log("state:", { state : { filters: normalizedFilters, stats } });
         };
 
         path.onmouseover = (event) => {

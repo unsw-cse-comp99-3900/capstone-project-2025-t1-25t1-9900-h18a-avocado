@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import RegionDetail from '../../components/RegionDetail';
-import '@testing-library/jest-dom'; // 保证引入扩展
+import '@testing-library/jest-dom';
 
 describe('RegionDetail Component', () => {
   const mockState = {
@@ -43,10 +43,10 @@ describe('RegionDetail Component', () => {
   test('renders region title and details', () => {
     renderWithRouter(mockState);
 
-    // 标题显示区域名
+    // title shows region name
     expect(screen.getByText(/Drought Analysis - Sample Region/i)).toBeInTheDocument();
 
-    // 其他基本信息
+    // other basic information
     expect(screen.getByText(/Index:/i)).toBeInTheDocument();
     expect(screen.getByText(/Source:/i)).toBeInTheDocument();
     expect(screen.getByText(/Baseline Period:/i)).toBeInTheDocument();
@@ -56,7 +56,7 @@ describe('RegionDetail Component', () => {
   test('renders chart titles', () => {
     renderWithRouter(mockState);
 
-    // 图表标题
+    // figure title
     expect(screen.getByText(/Projected change in number of events \(%\)/i)).toBeInTheDocument();
     expect(screen.getByText(/Projected change in number of events \(Difference\)/i)).toBeInTheDocument();
   });

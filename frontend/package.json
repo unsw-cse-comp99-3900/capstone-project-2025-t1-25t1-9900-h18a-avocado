@@ -55,7 +55,7 @@
   },
   "jest": {
     "testMatch": [
-      "<rootDir>/src/tests/UI/**/*.js"
+      "<rootDir>/src/tests/**/*.js"
     ],
     "transformIgnorePatterns": [
     "/node_modules/(?!react-leaflet)/"

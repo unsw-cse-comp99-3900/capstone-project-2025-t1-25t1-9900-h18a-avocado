@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import DropDown from '../../components/DropDown';
-import '@testing-library/jest-dom'; // 确保引入
+import '@testing-library/jest-dom';
 
 describe('DropDown Component', () => {
   const mockOnSelectionChange = jest.fn();
@@ -20,7 +20,7 @@ describe('DropDown Component', () => {
       />
     );
 
-    // 检查 label 是否渲染
+    // check if the label is rendered correctly
     expect(screen.getByText('Definition')).toBeInTheDocument();
   });
 
@@ -34,14 +34,14 @@ describe('DropDown Component', () => {
       />
     );
 
-    // 1. 先点击 "Definition" ListItem，展开 Select
+    // 1. click on the ListItem to expand the Select
     fireEvent.click(screen.getByText('Definition'));
 
-    // 2. 点击 combobox (Select)
+    // 2. click on the combobox (Select)
     const combobox = screen.getByRole('combobox');
     fireEvent.mouseDown(combobox);
 
-    // 3. 异步等待下拉选项出现
+    // 3. wait for the dropdown options to appear
     const option = await screen.findByText('Change in Number');
     expect(option).toBeInTheDocument();
   });
@@ -56,17 +56,17 @@ describe('DropDown Component', () => {
       />
     );
 
-    // 1. 展开
+    // 1. expand the dropdown
     fireEvent.click(screen.getByText('Definition'));
 
     const combobox = screen.getByRole('combobox');
     fireEvent.mouseDown(combobox);
 
-    // 2. 等待并点击选项
+    // 2. wait and click on the option
     const option = await screen.findByText('Change in Number');
     fireEvent.click(option);
 
-    // 3. 确认 onSelectionChange 被正确触发
+    // 3. check if the onSelectionChange function was called with the correct arguments
     expect(mockOnSelectionChange).toHaveBeenCalledWith('Definition', 'Change in Number');
   });
 
@@ -80,16 +80,16 @@ describe('DropDown Component', () => {
       />
     );
 
-    // 展开 Scenario
+    // expand the scenario dropdown
     fireEvent.click(screen.getByText('Scenario'));
     fireEvent.mouseDown(screen.getByRole('combobox'));
 
-    // 检查 CMIP5 相关选项
+    // check the options for CMIP5
     expect(await screen.findByText('RCP4.5')).toBeInTheDocument();
     expect(screen.getByText('RCP8.5')).toBeInTheDocument();
   });
   test('renders scenario options based on selectedSource2', async () => {
-    // 切换 source 到 CMIP6
+    // switch source to CMIP6
     render(
       <DropDown 
         label="Scenario" 
@@ -99,11 +99,11 @@ describe('DropDown Component', () => {
       />
     );
 
-    // 再次展开
+    // expand the scenario dropdown again
     fireEvent.click(screen.getByText('Scenario'));
     fireEvent.mouseDown(screen.getByRole('combobox'));
 
-    // 检查 CMIP6 相关选项
+    // check the options for CMIP6
     expect(await screen.findByText('SSP1-2.6')).toBeInTheDocument();
     expect(screen.getByText('SSP3-7.0')).toBeInTheDocument();
   });

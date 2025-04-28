@@ -18,7 +18,6 @@ import {
 import SettingsInputSvideoIcon from "@mui/icons-material/SettingsInputSvideo";
 import ListIcon from "@mui/icons-material/List";
 import UpdateIcon from "@mui/icons-material/Update";
-// import VisibilityIcon from "@mui/icons-material/Visibility";
 import SourceIcon from "@mui/icons-material/Source";
 import LayersIcon from "@mui/icons-material/Layers";
 import InfoIcon from "@mui/icons-material/Info";
@@ -28,7 +27,6 @@ const menuItems = [
   { text: "Definition", icon: <SettingsInputSvideoIcon />, dropdown: true },
   { text: "Drought Index", icon: <ListIcon />, dropdown: true },
   { text: "Time Frames", icon: <UpdateIcon />, dropdown: true },
-  // { text: "Change", icon: <VisibilityIcon />, dropdown: false },
   { text: "Source", icon: <SourceIcon />, dropdown: true },
   { text: "Scenario", icon: <LayersIcon />, dropdown: true },
 ];
@@ -89,13 +87,13 @@ function SideBar({ onFetchData, loading }) {
           marginTop: "70px",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "flex-start", // ✅ 保证内容靠上
-          overflow: "hidden", // ✅ 避免溢出
+          justifyContent: "flex-start",
+          overflow: "hidden",
         },
       }}
     >
-      {/* ✅ 上半部分：Functions 区域 */}
-      <Box> {/* ✅ 让 Functions 占据可用空间 */}
+      {/* upper side: Functions */}
+      <Box>
         <Typography variant="h6" align="center" sx={{ mt: 2, mb: 1, fontWeight: "bold" }}>
           Functions
         </Typography>
@@ -126,18 +124,18 @@ function SideBar({ onFetchData, loading }) {
             onChange={(e) => handleSelectionChange("Threshold", e.target.value)}
             sx={{
               '& .MuiOutlinedInput-root': {
-                backgroundColor: '#fafafa', // 背景色更浅，增强对比度
+                backgroundColor: '#fafafa',
                 borderRadius: '5px',
                 '& fieldset': {
-                  borderColor: '#1e78d0', // 边框颜色一致
+                  borderColor: '#1e78d0',
                 },
                 '&:hover fieldset': {
-                  borderColor: '#1565c0', // 鼠标悬停时，边框颜色加深
+                  borderColor: '#1565c0',
                 },
               },
               '& .MuiInputBase-input': {
-                padding: '10px', // 增加内边距，改善可读性
-                fontSize: '1rem', // 增大字体大小，提升可读性
+                padding: '10px',
+                fontSize: '1rem',
               },
             }}
           />
@@ -150,12 +148,10 @@ function SideBar({ onFetchData, loading }) {
         </Box>
       </Box>
 
-      {/* ✅ 让分割线紧贴 Submit Filters */}
       <Divider sx={{ my: 1 }} />
 
-      {/* ✅ 下半部分：Explanations 区域 */}
+      {/* lower side: Explanations */}
       <Box sx={{ flexGrow: 0, overflow: "auto", p: 2 }}>
-        {/* 解释区域 */}
         <Typography variant="h6" align="center" sx={{ fontWeight: "bold", mb: 1 }}>
           Explanations
         </Typography>
@@ -258,7 +254,7 @@ function SideBar({ onFetchData, loading }) {
         </Box>
       </Box>
 
-      {/* ✅ 弹出对话框 */}
+      {/* dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog}>
         <DialogTitle>{dialogTitle}</DialogTitle>
         <DialogContent>
