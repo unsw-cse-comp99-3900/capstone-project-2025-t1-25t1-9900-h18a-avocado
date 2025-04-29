@@ -20,7 +20,6 @@ function App() {
       setFilters(filters);
       const regionDiffs = await calculateRegionDiffs(filters);
       setMapData({ received_data: regionDiffs });
->>>>>>> origin/frontend_boxiangxu
     } catch (error) {
       console.error("Error fetching map data:", error);
     } finally {
