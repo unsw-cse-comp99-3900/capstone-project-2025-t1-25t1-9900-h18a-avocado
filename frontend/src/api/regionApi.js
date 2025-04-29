@@ -1,5 +1,9 @@
 const API_BASE_URL = "http://127.0.0.1:9901/drought";
 
+/**
+  * send POST request
+  * @param {string} endpoint API path
+**/
 const postRequest = async (endpoint, payload) => {
   try {
     const response = await fetch(`${API_BASE_URL}/${endpoint}`, {

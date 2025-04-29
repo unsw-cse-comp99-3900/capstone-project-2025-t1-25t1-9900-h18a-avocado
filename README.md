@@ -1,22 +1,52 @@
-## Frontend Updates
+# Future Drought Explorer System
 
-### 1. Added `data/` Folder
-- Created a new `data/` directory to organize shared/static data.
-- Moved all region `id` and `name` mappings into `region.js`.
-- Moved the SVG map content into `svgMap.js` to simplify the `Map` component.
+This is the group project for COMP9900, developed by Team 9900-H18A-AVOCADO. The system provides an interactive interface for exploring projected drought changes under different climate scenarios.
 
-### 2. Updated `SideBar.jsx`
-- Added a `Threshold` input field to allow user customization.
-- Modified the data structure sent to the backend to match the expected format.
+---
 
-### 3. Added `dataProcessor.js`
-- Introduced a new module to handle data processing.
-- Fetches both baseline data (1980–2019) and selected future data for all 58 regions defined in `region.js`.
-- Calculates the difference per region and returns a list of differences for map rendering.
+## 👥 Team Information
 
-### 4. Updated `mapApi.js`
-- Adjusted request logic and endpoint formatting to align with the backend API requirements.
+| Name           | Zid       | Email                         | Role           | Area      |
+|----------------|-----------|-------------------------------|----------------|-----------|
+| Yangyang Chen  | z5473726  | z5473726@ad.unsw.edu.au       | Group Member   | Front-end |
+| Haoze Jin      | z5430906  | z5430906@ad.unsw.edu.au       | Group Member   | Back-end  |
+| Jiawei Ma      | z5454881  | z5454881@ad.unsw.edu.au       | Product Owner  | Front-end |
+| Boxiang Xu     | z5457633  | z5457633@ad.unsw.edu.au       | Scrum Master   | Front-end |
+| Hexiang Wan    | z5509425  | z5509425@ad.unsw.edu.au       | Group Member   | Front-end |
+| Teng Zang      | z5486949  | z5486949@ad.unsw.edu.au       | Group Member   | Back-end  |
 
-### 5. File Extension Conventions
-- Utility, API, and logic files now use the `.js` extension.
-- React components continue to use the `.jsx` extension for clarity and consistency.
+---
+
+## 🚀 Quick Start (Docker)
+
+Make sure Docker and Docker Compose are installed on your machine.
+
+### Steps:
+
+1. **Get the code**  
+   Clone the repository or download and unzip the source code.
+
+2. **Start Docker Desktop**  
+   Open Docker and navigate to the project root directory in terminal.
+
+3. **Run the container**
+   docker-compose up --build
+   This will build the images (if needed) and launch both frontend and backend containers.
+4. **Access the application**
+   Frontend: http://localhost:3000
+   Backend: http://localhost:9901
+
+---
+
+## 🧪 Testing & Evidence
+
+1. **All test files are located in:**
+   frontend/src/tests/
+
+2. **The tests are written using Jest and React Testing Library.**
+
+3. **To run all tests:**
+   npm test -- --watchAll=false
+
+4. **open the visual coverage report in:**
+   frontend/coverage/lcov-report/index.html

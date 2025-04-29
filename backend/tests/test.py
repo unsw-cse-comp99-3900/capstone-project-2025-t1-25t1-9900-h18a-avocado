@@ -4,38 +4,38 @@ import glob
 from xclim.indices.stats import standardized_index_fit_params
 
 # -----------------------------------------------------------------------------
-# 设定参数
+# setup parameters
 # -----------------------------------------------------------------------------
-# 干旱阈值（SPI < -1.0 代表干旱）
+# drought_threshold (SPI < -1.0 represents drought)
 drought_threshold = -1.0
 
-# 选择排放情景: "ssp126" 或 "ssp370"
+# select emission scenario: "ssp126" or "ssp370"
 scenario = "ssp126"
 
 # -----------------------------------------------------------------------------
-# 读取数据
+# read data
 # -----------------------------------------------------------------------------
-# 读取历史数据 (1951-2014)
+# read historical data (1951-2014)
 historical_files = sorted(glob.glob("CMIP6/historical/*.nc"))
 ds_historical = xr.open_mfdataset(historical_files, combine="by_coords")
 
-# 读取未来数据 (2015-2099)
+# read future data (2015-2099)
 scenario_files = sorted(glob.glob(f"CMIP6/{scenario}/*.nc"))
 ds_scenario = xr.open_mfdataset(scenario_files, combine="by_coords")
 
-# 合并数据集
+# combine datasets along the time dimension
 ds = xr.concat([ds_historical, ds_scenario], dim="time")
 
 # -----------------------------------------------------------------------------
-# 选择降水变量，并转换单位（kg/m²/s → mm/day）
+# select precipitation variable and convert units (kg/m²/s → mm/day)
 pr = ds["pr"] * 86400
 pr.attrs["units"] = "mm/day"
 
-# 优化 chunking：确保 time 维度为一个整体，lat 和 lon 每 100 个网格切一次
+# optimized chunking: ensure time dimension is a single chunk, lat and lon are chunked every 100 grids
 pr = pr.chunk({"time": -1, "lat": 100, "lon": 100})
 
 # -----------------------------------------------------------------------------
-# 设定基准期（1980-2019）及未来时间段
+# setup calibration period (1980-2019) and future periods
 cal_start = "1980-01-01"
 cal_end = "2019-12-31"
 
@@ -46,10 +46,10 @@ future_periods = {
 }
 
 # -----------------------------------------------------------------------------
-# 计算基准期 SPI-12 拟合参数
-print("⚙️ 计算基准期 SPI-12 拟合参数...")
+# calculate SPI-12 fitting parameters for the baseline period
+print("⚙️ calculating SPI-12 fitting parameters for the baseline period...")
 
-# 选取基准期数据，并确保 time 维度统一成一个 chunk
+# select baseline data and ensure time dimension is a single chunk
 pr_baseline = pr.sel(time=slice(cal_start, cal_end)).chunk({"time": -1, "lat": 100, "lon": 100}).unify_chunks()
 
 baseline_params = standardized_index_fit_params(
@@ -58,39 +58,39 @@ baseline_params = standardized_index_fit_params(
     window=12,
     dist="gamma",
     method="ML",
-    zero_inflated=True  # 降水数据可能含有零值
-).compute()  # 立刻计算，确保结果可用
+    zero_inflated=True  # precipitation data may contain zeros
+).compute()  # calculate immediately to ensure the result is available
 
-print("✅ 基准期参数计算完成！")
+print("✅ baseline_params has been calculated successfully!")
 
 # -----------------------------------------------------------------------------
-# 计算未来每个时间段的 SPI-12
+# calculate SPI-12 for each future period
 spi_12_future = {}
 for period, (start, end) in future_periods.items():
-    print(f"⚙️ 计算 {period} ( {start} - {end} ) SPI-12...")
+    print(f"⚙️ calculate {period} ( {start} - {end} ) SPI-12...")
     pr_future = pr.sel(time=slice(start, end))
     spi_12_future[period] = xc.standardized_precipitation_index(
         pr_future, freq="MS", window=12, dist="gamma", method="ML", params=baseline_params
     ).compute()  # 立即计算，防止 KeyError
 
-print("✅ 未来 SPI-12 计算完成！")
+print("✅ the calculate of future_periods SPI-12 has been completed!")
 
 # -----------------------------------------------------------------------------
-# 计算 10 年期统计
+# calculate 10-year statistics
 spi_12_decade = {}
 drought_months_decade = {}
 drought_length_decade = {}
 
 for period in future_periods.keys():
-    print(f"⚙️ 计算 {period} 的 10 年期统计...")
+    print(f"⚙️ calculating {period} SPI-12 decade statistics...")
 
-    # 计算 10 年期均值
+    # calculating 10-year mean
     spi_12_decade[period] = spi_12_future[period].groupby(spi_12_future[period].time.dt.year // 10).mean(dim="time")
 
-    # 计算每 10 年内干旱月份数（SPI < drought_threshold）
+    # calculate the number of drought months (SPI < drought_threshold) in each decade
     drought_months_decade[period] = (spi_12_decade[period] < drought_threshold).sum(dim="time")
 
-    # 计算每 10 年内干旱持续时间（SPI < drought_threshold），这里对 SPI 进行二值化后按年份分组求和
+    # calculate the number of drought months (SPI < drought_threshold) in each decade, binary SPI is grouped by year and summed
     drought_length_decade[period] = (spi_12_future[period] < drought_threshold).astype(int).groupby(spi_12_future[period].time.dt.year // 10).sum(dim="time")
 
-print("✅ 未来 10 年期 SPI-12 统计计算完成！")
+print("✅ the calculate of SPI-12 decade statistics has been completed!")

@@ -1,59 +1,55 @@
 import mapApi from "./mapApi";
-import regions from "../data/regions";
+
+/**
+ * Calculates the difference in drought indices between baseline and future periods.
+ * @param {Object} filters - The filters containing the parameters for the calculation.
+ * @param {string} filters.Drought_Index - The drought index to use (e.g., "SPI", "SPEI").
+ * @param {string} filters.Source - The data source (e.g., "CMIP5", "CMIP6").
+ * @param {string} filters.Scenario - The scenario to use (e.g., "RCP4.5", "RCP8.5").
+ * @param {string} filters.Threshold - The threshold value for the drought index.
+ * @param {string} filters.Time_Frames - The time frames for the calculation (e.g., "2006-2035").
+ * @param {string} filters.Definition - The definition of the drought event (e.g., "Change in Number").
+ * @returns {Promise<Array>} - A promise that resolves to an array of differences between baseline and future drought indices.
+**/
 
 export const calculateRegionDiffs = async (filters) => {
-  console.log("filters:", filters);
   const [futureStart, futureEnd] = filters["Time Frames"]
     ? filters["Time Frames"].split("-").map((y) => parseInt(y.trim()))
     : [2020, 2059];
-  console.log("futureStart:", futureStart, "futureEnd:", futureEnd);
 
   const baseParams = {
     index: filters["Drought Index"]?.toLowerCase(),
     data_source: filters["Source"]?.toLowerCase(),
     scenario: filters["Scenario"]?.toLowerCase().replace(/[.\-]/g, ""),
-  threshold: parseFloat(filters["Threshold"]) || -1,
+    threshold: parseFloat(filters["Threshold"]) || -1,
   };
-  console.log("baseParams:", baseParams);
 
-  let endpoint = "drought-event-count";
+  let endpoint = "drought-event-summary";
   if (filters["Definition"] === "Change in Length") {
-    endpoint = "drought-month-count";
+    endpoint = "drought-months-summary";
   }
-  console.log("endpoint:", endpoint);
 
-  const regionDiffs = await Promise.all(
-    regions.map(async ({ region_id }) => {
-      const baselinePayload = {
-        ...baseParams,
-        region_id,
-        start_year: 1976,
-        end_year: 2005,
-      };
+  const baselinePayload = {
+    ...baseParams,
+    start_year: 1976,
+    end_year: 2005,
+  };
 
-      const futurePayload = {
-        ...baseParams,
-        region_id,
-        start_year: futureStart,
-        end_year: futureEnd,
-      };
+  const futurePayload = {
+    ...baseParams,
+    start_year: futureStart,
+    end_year: futureEnd,
+  };
 
-      const [baselineData, futureData] = await Promise.all([
-        mapApi.fetchMapData(baselinePayload, endpoint),
-        mapApi.fetchMapData(futurePayload, endpoint),
-      ]);
+  const [baselineData, futureData] = await Promise.all([
+    mapApi.fetchMapData(baselinePayload, endpoint),
+    mapApi.fetchMapData(futurePayload, endpoint),
+  ]);
 
-      let diff = 0;
-      if (endpoint === "drought-event-count") {
-        diff = (futureData.drought_events || []).length - (baselineData.drought_events || []).length;
-      } else if (endpoint === "drought-month-count") {
-        diff = (futureData.drought_month_count || 0) - (baselineData.drought_month_count || 0);
-      }
+  const diffs = baselineData.drought_summary.map((data, index) => {
+    const futureValue = futureData.drought_summary[index];
+    return futureValue - data;
+  });
 
-      return diff;
-    })
-  );
-  console.log("regionDiffs:", regionDiffs);
-
-  return regionDiffs;
+  return diffs;
 };

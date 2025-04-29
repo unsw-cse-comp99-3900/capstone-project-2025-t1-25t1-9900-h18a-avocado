@@ -14,10 +14,10 @@ import ExpandMore from "@mui/icons-material/ExpandMore";
 // Define dropdown options
 const dropDownContent = {
   "Definition": {
-    options: ["", "Change in Number", "Change in Length"]
+    options: ["", "Change in Length", "Change in Number"]
   },
   "Drought Index": {
-    options: ["", "SPI", "SPEI", "PDSI"]
+    options: ["", "SPI", "SPEI"]
   },
   "Time Frames": {
     options: ["", "2006-2035", "2036-2065", "2066-2095"]
